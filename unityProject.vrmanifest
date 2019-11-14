@@ -1,0 +1,16 @@
+{
+  "source": "Unity",
+  "applications": [
+    {
+      "app_key": "application.generated.unity.will_it_fall.exe",
+      "launch_type": "url",
+      "url": "steam://launch/",
+      "action_manifest_path": "C:\\Users\\VR_Research_1\\Documents\\jeremy\\will_it_fall\\actions.json",
+      "strings": {
+        "en_us": {
+          "name": "will_it_fall [Testing]"
+        }
+      }
+    }
+  ]
+}

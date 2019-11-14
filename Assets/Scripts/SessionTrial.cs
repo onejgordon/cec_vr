@@ -37,34 +37,26 @@ public class RecordedHit {
 
 
 [System.Serializable]
-public class AllTowerSpecs {
+public class AllHandSpecs {
 
     public List<TowerSpec> towers;
-    public AllTowerSpecs() {
-        this.towers = new List<TowerSpec>(); // Empty list
+    public AllHandSpecs() {
+        this.towers = new List<HandSpec>(); // Empty list
     }
 }
 
 
 [System.Serializable]
-public class TowerSpec {
+public class HandSpec {
 
-    public List<BlockSpec> blocks;
-    public TowerSpec() {
-        this.blocks = new List<BlockSpec>(); // Empty list
-    }
-}
+    public List<string> table;
+    public List<string> priv;
+    private List<bool> correct;
 
-[System.Serializable]
-public class BlockSpec {
-    public float x;
-    public float w;
-    public float h;
-
-    public BlockSpec(float x, float w, float h) {
-        this.x = x;
-        this.w = w;
-        this.h = h;
+    public HandSpec() {
+        this.table = new List<string>(); // Empty list
+        this.priv = new List<string>(); // Empty list
+        this.correct = new List<bool>();
     }
 }
 
@@ -73,34 +65,34 @@ public class SessionTrial
 {
 
     // To store our different actors data
-    public string user_response;
+    public string subject_choice;
     public int trial_id;
     public double ts_start;
-    public double ts_response;
-    private bool responded = false;
+    public double ts_choice;
+    private bool choice_made = false;
     public List<RecordedHit> hits;
 
-    public TowerSpec tower;
+    public HandSpec hand;
 
     public SessionTrial(int id) {
-        this.tower = new TowerSpec();
+        this.hand = new HandSpec();
         this.trial_id = id;
         this.ts_start = Util.timestamp();
         this.hits = new List<RecordedHit>();
     }
 
-    public void StoreResponse(string response) {
-        this.user_response = response;
-        this.ts_response = Util.timestamp();
-        this.responded = true;
+    public void StoreResponse(int pos) {
+        this.subject_choice = pos;
+        this.ts_choice = Util.timestamp();
+        this.choice_made = true;
     }
 
     public void addBlock(float x, float w, float h) {
-        this.tower.blocks.Add(new BlockSpec(x, w, h));
+        // this.hand.blocks.Add(new BlockSpec(x, w, h));
     }
 
     public bool addHit(string key, Vector3 hitpoint, Quaternion hmd_rot, float conf) {
-        this.hits.Add(new RecordedHit(key, hitpoint.x, hitpoint.y, hitpoint.z, this.responded, hmd_rot, conf));
+        this.hits.Add(new RecordedHit(key, hitpoint.x, hitpoint.y, hitpoint.z, this.choice_made, hmd_rot, conf));
         return true;
     }
 }

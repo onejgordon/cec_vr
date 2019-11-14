@@ -9,8 +9,8 @@ using System.IO;
 public class MySessionData
 {
     public List<SessionTrial> trials = new List<SessionTrial>();
-    public List<TowerSpec> tower_specs = new List<TowerSpec>();
-    public List<int> tower_order = new List<int>();
+    public List<HandSpec> hand_specs = new List<TowerSpec>();
+    public List<int> hand_order = new List<int>();
 }
 
 public class SessionSaver : MonoBehaviour {

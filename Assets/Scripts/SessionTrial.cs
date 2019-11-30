@@ -69,15 +69,18 @@ public class SessionTrial
     public int trial_id;
     public double ts_start;
     public double ts_choice;
+    private bool with_adversary = false;
     private bool choice_made = false;
     public List<RecordedHit> hits;
 
     public HandSpec hand;
 
-    public SessionTrial(int id) {
+    public SessionTrial(int id, bool adversary) {
         this.hand = new HandSpec();
         this.trial_id = id;
         this.ts_start = Util.timestamp();
+        this.with_adversary = adversary;
+        this.points = 0;
         this.hits = new List<RecordedHit>();
     }
 
@@ -87,8 +90,8 @@ public class SessionTrial
         this.choice_made = true;
     }
 
-    public void addBlock(float x, float w, float h) {
-        // this.hand.blocks.Add(new BlockSpec(x, w, h));
+    public void adversarial() {
+        return this.with_adversary;
     }
 
     public bool addHit(string key, Vector3 hitpoint, Quaternion hmd_rot, float conf) {

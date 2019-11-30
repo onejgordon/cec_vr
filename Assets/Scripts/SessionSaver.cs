@@ -18,7 +18,7 @@ public class SessionSaver : MonoBehaviour {
 
     public MySessionData data = new MySessionData();
 
-    public void AddTrialResult(SessionTrial trial) {
+    public void AddTrial(SessionTrial trial) {
         if (data.trials.Count >= trial.trial_id) {
             Debug.Log("Already saved?");
         } else {

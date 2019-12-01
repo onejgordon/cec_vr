@@ -39,9 +39,9 @@ public class RecordedHit {
 [System.Serializable]
 public class AllHandSpecs {
 
-    public List<TowerSpec> towers;
+    public List<HandSpec> hands;
     public AllHandSpecs() {
-        this.towers = new List<HandSpec>(); // Empty list
+        this.hands = new List<HandSpec>(); // Empty list
     }
 }
 
@@ -51,7 +51,7 @@ public class HandSpec {
 
     public List<string> table;
     public List<string> priv;
-    private List<bool> correct;
+    public List<bool> correct;
 
     public HandSpec() {
         this.table = new List<string>(); // Empty list
@@ -65,8 +65,9 @@ public class SessionTrial
 {
 
     // To store our different actors data
-    public string subject_choice;
+    public int subject_choice;
     public int trial_id;
+    public int points = 0;
     public double ts_start;
     public double ts_choice;
     private bool with_adversary = false;
@@ -90,7 +91,7 @@ public class SessionTrial
         this.choice_made = true;
     }
 
-    public void adversarial() {
+    public bool adversarial() {
         return this.with_adversary;
     }
 

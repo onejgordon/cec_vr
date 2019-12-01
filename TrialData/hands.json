@@ -4,6 +4,16 @@
 			"priv": ["s1_c2_p1", "s1_c1_p1"],
 			"table": ["s1_c1_p1", "s1_c3_p1"],
 			"correct": [false, true]
-		}
+		},
+		{
+			"priv": ["s1_c2_p1", "s1_c1_p1"],
+			"table": ["s1_c1_p1", "s1_c3_p1"],
+			"correct": [false, true]
+		},
+		{
+			"priv": ["s1_c2_p1", "s1_c1_p1"],
+			"table": ["s1_c1_p1", "s1_c3_p1"],
+			"correct": [false, true]
+		}				
 	]
 }

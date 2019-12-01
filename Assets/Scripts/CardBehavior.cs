@@ -23,11 +23,11 @@ public class CardBehavior : MonoBehaviour
     }
 
     public string getBlockId() {
-        return this.block_id;
+        return this.card_id;
     }
 
     public void setID(string id) {
-        this.block_id = id;
+        this.card_id = id;
     }
 
 }

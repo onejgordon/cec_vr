@@ -13,13 +13,15 @@ public class ExperimentRunner : MonoBehaviour
     RecordingController recording;
     private Color SKY_RUNNING = new Color(0, 80, 150);
     private Color SKY_DEFAULT = new Color(50, 50, 50);
+    private float CARD_W = 10.0f;
+    private float CARD_H = 20.0f;
     public int N_TRIALS = 5; // Towers to run
     public int MAX_TRIALS = 1; // Set to 0 for production. Just for short debug data collection
     public int SELECTION_SECS = 5;
     public int DECISION_SECS = 10;
     public int ADVERSARY_DELAY_MINS = 10;
     public int EXP_MAX_MINS = 25;
-    private int ts_exp_start = 0; // Timestamp
+    private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
     private SessionTrial current_trial;
     public Transform card;
@@ -50,6 +52,7 @@ public class ExperimentRunner : MonoBehaviour
         } else Debug.Log(string.Format("{0} doesn't exist", path));
         if (record) recording = GetComponent<RecordingController>();
         this.randomize_condition();
+        this.BeginExperiment();
     }
 
     // Update is called once per frame
@@ -59,19 +62,20 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     private void randomize_condition() {
-        int c = Random.Range(0, 1)
+        int c = Random.Range(0, 1);
         if (c == 0) { this.condition = "immediate"; }
         else { this.condition = "delayed"; }
+        Debug.Log("Condition: " + this.condition);
     }
 
-    private int minutes_in() {
+    private double minutes_in() {
         return (Util.timestamp() - this.ts_exp_start) / 60;
     }
 
     void RandomizeTrialOrder() {
         // Shuffle and save
         System.Random rng = new System.Random();
-        this.hand_order = Enumerable.Range(0,this.towers.Count).ToList();
+        this.hand_order = Enumerable.Range(0,this.hands.Count).ToList();
         this.hand_order = this.hand_order.OrderBy(a => rng.Next()).ToList();
         // Save order to session
         this.session.data.hand_order = this.hand_order;
@@ -89,7 +93,7 @@ public class ExperimentRunner : MonoBehaviour
         this.trial_index += 1;
         bool show_adversary_info = false;
         bool activate = false;
-        int mins = this.minutes_in();
+        double mins = this.minutes_in();
         if (!this.adversary_active) {
             if (this.condition == "delayed") {
                 // Check to see if we should activate adversary (X minutes passed)
@@ -130,7 +134,7 @@ public class ExperimentRunner : MonoBehaviour
     public void SubjectSelection(int position) {
         // Score selection and save trial to session
         this.current_trial.StoreResponse(position);
-        bool correct_selection = this.current_trial.hand.correct[position]
+        bool correct_selection = this.current_trial.hand.correct[position];
         if (this.current_trial.adversarial()) {
             // Make prediction based on eye fixations
             int adversary_prediction = 0; // TODO (currently always left)
@@ -165,12 +169,14 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void BeginDecisionStage() {
+        Debug.Log("Begin decision stage...");
         // Show decision prompt
         ShowButtons();
         Invoke("BeginSelectionStage", DECISION_SECS);
     }
 
     void BeginSelectionStage() {
+        Debug.Log("Begin selection stage, awaiting user choice...");
         // Await user choice
         // Possibly update "adversary watching" indicator
         GetComponent<Camera>().backgroundColor = SKY_RUNNING;
@@ -185,31 +191,32 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void DealHand(HandSpec hs) {
+        float CARD_SEP = 2.0f;
+        float CARD_H = 2.3f;
         // Deal cards to private hand
         for (int i=0; i<2; i++) {
             string card_id = hs.priv[i];
-            float x = 5.0f * i;
-            float y = 0.0f;
-            float z = 0.0f;
-            float rot_x = 90.0f;
-            Transform newCard = AddCardToScene(i, x, y, z, rot_x);
+            float x = -CARD_SEP/2 + CARD_SEP * i;
+            float y = CARD_H;
+            float z = -15.0f;
+            float rot_z = 15.0f;
+            Transform newCard = AddCardToScene(card_id, x, y, z, rot_z);
         }
         // Deal cards to table
         for (int i=0; i<2; i++) {
             string card_id = hs.table[i];
-            float x = 5.0f * i;
-            float y = 0.0f;
-            float z = 20.0f;
-            float rot_x = 0.0f;
-            Transform newCard = AddCardToScene(i, x, y, z, rot_x);
+            float x = -CARD_SEP/2 + CARD_SEP * i;
+            float y = CARD_H;
+            float z = -10.0f;
+            float rot_z = 90.0f;
+            Transform newCard = AddCardToScene(card_id, x, y, z, rot_z);
         }
         session.data.hand_specs.Add(hs);
     }
 
-    private Transform AddCardToScene(string id, float x, float y, float z, float rot_x) {
-        Transform newCard = Instantiate(card, new Vector3(x, y, z), Quaternion.identity);
-        // TODO: Rotate
-        newCard.localScale = new Vector3(CARD_W, CARD_H, 1);
+    private Transform AddCardToScene(string id, float x, float y, float z, float rot_z) {
+        Transform newCard = Instantiate(card, new Vector3(x, y, z), Quaternion.Euler(0, 90.0f, rot_z));
+        // newCard.localScale = new Vector3(CARD_W, CARD_H, 1);
         newCard.GetComponent<CardBehavior>().setID(id);
         // TODO: Test if necessary to produce gaze target events
         BoxCollider collider = newCard.gameObject.AddComponent<BoxCollider>();

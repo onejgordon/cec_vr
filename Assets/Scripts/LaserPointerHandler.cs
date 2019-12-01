@@ -23,14 +23,14 @@ public ExperimentRunner expScript;
  }
 
  public void PointerClick(object sender, PointerEventArgs e) {
-    bool fall = e.target.name == "FallRightButton" || e.target.name == "FallLeftButton";
-    bool notfall = e.target.name == "NotFallButton";
-    if (fall) {
-        if (e.target.name == "FallRightButton") expScript.UserDecisionFallRight();
-        else expScript.UserDecisionFallLeft();
-    }
-    else if (notfall) expScript.UserDecisionNotFall();
-    else Debug.Log("Do nothing");
+    // bool fall = e.target.name == "FallRightButton" || e.target.name == "FallLeftButton";
+    // bool notfall = e.target.name == "NotFallButton";
+    // if (fall) {
+    //     if (e.target.name == "FallRightButton") expScript.UserDecisionFallRight();
+    //     else expScript.UserDecisionFallLeft();
+    // }
+    // else if (notfall) expScript.UserDecisionNotFall();
+    // else Debug.Log("Do nothing");
  }
 
  public void PointerInside(object sender, PointerEventArgs e)

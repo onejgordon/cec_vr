@@ -9,7 +9,7 @@ using System.IO;
 public class MySessionData
 {
     public List<SessionTrial> trials = new List<SessionTrial>();
-    public List<HandSpec> hand_specs = new List<TowerSpec>();
+    public List<HandSpec> hand_specs = new List<HandSpec>();
     public List<int> hand_order = new List<int>();
 }
 

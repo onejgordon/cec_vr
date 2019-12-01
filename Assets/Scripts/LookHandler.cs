@@ -100,10 +100,10 @@ namespace PupilLabs
                 if (bg) {
                     runner.RecordHit(objectHit.name.ToLower(), hit, confidence);
                 } else {
-                    BlockBehavior blockbehavior = objectHit.GetComponent<BlockBehavior>();
-                    if (blockbehavior != null) {
+                    CardBehavior beh = objectHit.GetComponent<CardBehavior>();
+                    if (beh != null) {
                         // Hit a block
-                        runner.RecordHit("block" + blockbehavior.getBlockId().ToString(), hit, confidence);
+                        runner.RecordHit("block" + beh.getBlockId().ToString(), hit, confidence);
                     }
                 }
 

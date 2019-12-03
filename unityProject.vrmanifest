@@ -2,13 +2,13 @@
   "source": "Unity",
   "applications": [
     {
-      "app_key": "application.generated.unity.will_it_fall.exe",
+      "app_key": "application.generated.unity.cec.exe",
       "launch_type": "url",
       "url": "steam://launch/",
       "action_manifest_path": "C:\\Users\\VR_Research_1\\Documents\\jeremy\\cec_vr\\actions.json",
       "strings": {
         "en_us": {
-          "name": "will_it_fall [Testing]"
+          "name": "cec [Testing]"
         }
       }
     }

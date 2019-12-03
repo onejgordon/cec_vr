@@ -10,4 +10,9 @@ using UnityEngine;
         System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
         return (System.DateTime.UtcNow - epochStart).TotalMilliseconds / 1000.0;
    }
+
+   public static void AddCardPattern(Transform card, string pattern) {
+      Texture2D cardTexture = Resources.Load ("Images/" + pattern) as Texture2D;
+		  card.GetComponent<Renderer>().material.mainTexture = cardTexture;
+   }
  }

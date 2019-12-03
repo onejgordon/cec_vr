@@ -1,19 +1,19 @@
 {
 	"hands": [
 		{
-			"priv": ["s1_c2_p1", "s1_c1_p1"],
-			"table": ["s1_c1_p1", "s1_c3_p1"],
+			"priv": ["1d", "2d"],
+			"table": ["3d", "2o"],
+			"correct": [true, false]
+		},
+		{
+			"priv": ["3o", "2d"],
+			"table": ["2s", "1s"],
 			"correct": [false, true]
 		},
 		{
-			"priv": ["s1_c2_p1", "s1_c1_p1"],
-			"table": ["s1_c1_p1", "s1_c3_p1"],
-			"correct": [false, true]
-		},
-		{
-			"priv": ["s1_c2_p1", "s1_c1_p1"],
-			"table": ["s1_c1_p1", "s1_c3_p1"],
-			"correct": [false, true]
+			"priv": ["2d", "2o"],
+			"table": ["2s", "2o"],
+			"correct": [true, false]
 		}				
 	]
 }

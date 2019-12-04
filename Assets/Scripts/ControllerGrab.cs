@@ -10,17 +10,30 @@ public class ControllerGrab : MonoBehaviour
     public SteamVR_Action_Boolean grabAction;
     private GameObject collidingObject; // 1
     private GameObject objectInHand; // 2
+    private ExperimentRunner exp;
+    private bool inHandZone = false;
 
+
+    private bool cardReleasable() {
+        return (objectInHand && inHandZone);
+    }
+
+    private void Vibrate() {
+        GetComponent<ControllerActions>().Vibrate();
+    }
     private void SetCollidingObject(Collider col)
     {
-        // 1
         if (collidingObject || !col.GetComponent<Rigidbody>())
         {
+            // Do nothing if already colliding with something
             return;
         }
         collidingObject = col.gameObject;
     }
 
+    void Start() {
+        this.exp = GameObject.Find("Camera").GetComponent<ExperimentRunner>();
+    }
 
     // Update is called once per frame
     void Update()
@@ -48,7 +61,12 @@ public class ControllerGrab : MonoBehaviour
     // 1
     public void OnTriggerEnter(Collider other)
     {
+        if (other.gameObject.name == "HandHolder") inHandZone = true;
         SetCollidingObject(other);
+        if (this.cardReleasable()) {
+            // Colliding with holder while holding card, provide feedback
+            this.Vibrate();
+        }
     }
 
     public void OnTriggerStay(Collider other)
@@ -58,6 +76,7 @@ public class ControllerGrab : MonoBehaviour
 
     public void OnTriggerExit(Collider other)
     {
+        if (other.gameObject.name == "HandHolder") inHandZone = false;
         if (!collidingObject)
         {
             return;
@@ -96,9 +115,24 @@ public class ControllerGrab : MonoBehaviour
             Debug.Log("Release card");
             GetComponent<FixedJoint>().connectedBody = null;
             Destroy(GetComponent<FixedJoint>());
-            objectInHand.GetComponent<Rigidbody>().velocity = controllerPose.GetVelocity();
-            objectInHand.GetComponent<Rigidbody>().angularVelocity = controllerPose.GetAngularVelocity();
+            
 
+            if (this.cardReleasable()) {
+                // Releasing card into hand
+                // Snap to holder position
+                GameObject centerHandCard = GameObject.Find("CardInHand1");
+                objectInHand.transform.localPosition = centerHandCard.transform.localPosition + new Vector3(exp.CARD_SEP, 0, 0);
+                objectInHand.transform.localRotation = centerHandCard.transform.localRotation;
+
+                // Save subject selection for this trial and move on
+                bool left = objectInHand.GetComponent<CardBehavior>().isLeft();
+                if (left) exp.SubjectSelectCardLeft();
+                else exp.SubjectSelectCardRight();
+            } else {
+                // Release with velocity
+                objectInHand.GetComponent<Rigidbody>().velocity = controllerPose.GetVelocity();
+                objectInHand.GetComponent<Rigidbody>().angularVelocity = controllerPose.GetAngularVelocity();
+            }
         }
         objectInHand = null;
     }

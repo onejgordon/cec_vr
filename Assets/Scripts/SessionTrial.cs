@@ -51,12 +51,12 @@ public class HandSpec {
 
     public List<string> table;
     public List<string> priv;
-    public List<bool> correct;
+    public List<int> correct;
 
     public HandSpec() {
         this.table = new List<string>(); // Empty list
         this.priv = new List<string>(); // Empty list
-        this.correct = new List<bool>();
+        this.correct = new List<int>();
     }
 }
 
@@ -76,8 +76,8 @@ public class SessionTrial
 
     public HandSpec hand;
 
-    public SessionTrial(int id, bool adversary) {
-        this.hand = new HandSpec();
+    public SessionTrial(int id, HandSpec hand, bool adversary) {
+        this.hand = hand;
         this.trial_id = id;
         this.ts_start = Util.timestamp();
         this.with_adversary = adversary;
@@ -85,10 +85,12 @@ public class SessionTrial
         this.hits = new List<RecordedHit>();
     }
 
-    public void StoreResponse(int pos) {
+    public bool StoreResponse(int pos) {
         this.subject_choice = pos;
         this.ts_choice = Util.timestamp();
         this.choice_made = true;
+        int correct = this.hand.correct[pos];
+        return correct == 1;
     }
 
     public bool adversarial() {

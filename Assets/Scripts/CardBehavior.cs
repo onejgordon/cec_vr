@@ -6,6 +6,7 @@ public class CardBehavior : MonoBehaviour
 {
     private Material mat;
     private string card_id; 
+    private int position;
 
 
     void Start()
@@ -25,6 +26,15 @@ public class CardBehavior : MonoBehaviour
 
     public void setID(string id) {
         this.card_id = id;
+    }
+
+    public void setPosition(int pos) {
+        // L: 0, R: 1
+        this.position = pos;
+    }
+
+    public bool isLeft() {
+        return this.position == 0;
     }
 
 }

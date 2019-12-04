@@ -20,6 +20,7 @@ public class ExperimentRunner : MonoBehaviour
     public int DECISION_SECS = 10; 
     public int ADVERSARY_DELAY_MINS = 10;
     public int EXP_MAX_MINS = 25;
+    public float CARD_SEP = 0.2f;
     private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
     private SessionTrial current_trial;
@@ -88,10 +89,10 @@ public class ExperimentRunner : MonoBehaviour
             recording.StartRecording();
         }
         this.ts_exp_start = Util.timestamp();
-        BeginNextTrial();
+        GotoNextTrial();
     }
 
-    public void BeginNextTrial() {
+    public void GotoNextTrial() {
         this.trial_index += 1;
         bool show_adversary_info = false;
         bool activate = false;
@@ -109,9 +110,7 @@ public class ExperimentRunner : MonoBehaviour
             this.adversary_active = true;
             show_adversary_info = true;
         }
-        this.current_trial = new SessionTrial(this.trial_index, this.adversary_active);
-        GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
-        Debug.Log("Running trial " + this.trial_index.ToString());
+        
         if (mins > EXP_MAX_MINS || this.trial_index > this.hand_order.Count) Finish();
         else {
             if (show_adversary_info) ShowAdversaryInfoThenTrial(); // Calls RunOneTrial
@@ -126,17 +125,21 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void RunOneTrial() {
-        MaybeClearHand();
+        Debug.Log("Running trial " + this.trial_index.ToString());
         int hand_index = this.hand_order[this.trial_index - 1];
-        DealHand(this.hands[hand_index]);
+        HandSpec hand = this.hands[hand_index];
+        this.current_trial = new SessionTrial(this.trial_index, hand, this.adversary_active);
+        GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
+
+        MaybeClearHand();
+        DealHand();
         // Immediately start decision stage / timer
         BeginDecisionStage();
     }
 
     public void SubjectSelection(int position) {
         // Score selection and save trial to session
-        this.current_trial.StoreResponse(position);
-        bool correct_selection = this.current_trial.hand.correct[position];
+        bool correct_selection = this.current_trial.StoreResponse(position);
         if (this.current_trial.adversarial()) {
             // Make prediction based on eye fixations
             int adversary_prediction = 0; // TODO (currently always left)
@@ -150,8 +153,8 @@ public class ExperimentRunner : MonoBehaviour
         session.AddTrial(this.current_trial);
         if (SELECTION_SECS == -1) {
             // No time limit, waiting for user choice
-            // So, now go to next trial
-            BeginNextTrial();
+            // So, now go to next trial after short delay
+            Invoke("GotoNextTrial", 2);
         }
     }
 
@@ -188,7 +191,7 @@ public class ExperimentRunner : MonoBehaviour
         // Possibly update "adversary watching" indicator
         GetComponent<Camera>().backgroundColor = SKY_RUNNING;
         if (SELECTION_SECS > -1) {
-            Invoke("BeginNextTrial", SELECTION_SECS);
+            Invoke("GotoNextTrial", SELECTION_SECS);
         }
     }
 
@@ -199,8 +202,8 @@ public class ExperimentRunner : MonoBehaviour
         this.cards.Clear();
     }
 
-    void DealHand(HandSpec hs) {
-        float CARD_SEP = 0.2f;
+    void DealHand() {
+        HandSpec hs = this.current_trial.hand;
         float CARD_LIFT = 0.04f;
         Vector3 table_pos = this.table.localPosition;
         float table_rad = this.table.localScale.z / 2;
@@ -213,12 +216,13 @@ public class ExperimentRunner : MonoBehaviour
             float z = this.handholder.localPosition.z;
             float rot = this.handholder.eulerAngles.x - 90.0f;
             Transform newCard = AddCardToScene(card_id, x, y, z);
+            newCard.name = "CardInHand" + i.ToString();
             // Kinematic to freeze, and don't need gravity on private cards
             Rigidbody rb = newCard.GetComponent<Rigidbody>();
             rb.useGravity = false; 
             rb.isKinematic = true;
             newCard.Rotate(new Vector3(0, 0, rot), Space.Self);
-            newCard.Translate(0.02f, 0.002f, 0.0f);
+            newCard.Translate(0.02f, 0.004f, 0.0f);
         }
         // Deal cards to table
         for (int i=0; i<2; i++) {
@@ -228,6 +232,7 @@ public class ExperimentRunner : MonoBehaviour
             float z = table_pos.z - table_rad/2;
             Transform newCard = AddCardToScene(card_id, x, y, z);
             newCard.gameObject.tag = "Grabbable";
+            newCard.GetComponent<CardBehavior>().setPosition(i);
         }
         session.data.hand_specs.Add(hs);
     }

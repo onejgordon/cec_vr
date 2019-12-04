@@ -10,6 +10,8 @@ public class ControllerActions : MonoBehaviour
     public SteamVR_Action_Boolean teleportAction; // 2
     public SteamVR_Action_Boolean grabAction; // 3
 
+    public SteamVR_Action_Vibration vibrateAction;
+
     // Update is called once per frame
     void Update()
     {
@@ -33,6 +35,10 @@ public class ControllerActions : MonoBehaviour
     public bool GetGrab() // 2
     {
         return grabAction.GetState(handType);
+    }
+
+    public void Vibrate() {
+        this.vibrateAction.Execute(0, 0.7f, 50, 0.5f, SteamVR_Input_Sources.Any);
     }
 
 }

@@ -12,7 +12,8 @@ using UnityEngine;
    }
 
    public static void AddCardPattern(Transform card, string pattern) {
-      Texture2D cardTexture = Resources.Load ("Images/" + pattern) as Texture2D;
-		  card.GetComponent<Renderer>().material.mainTexture = cardTexture;
+      Sprite face_sprite = Resources.Load<Sprite>("Images/" + pattern);
+      Transform face = card.GetChild(0);
+		  face.GetComponent<SpriteRenderer>().sprite = face_sprite;
    }
  }

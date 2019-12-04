@@ -3,17 +3,17 @@
 		{
 			"priv": ["1d", "2d"],
 			"table": ["3d", "2o"],
-			"correct": [true, false]
+			"correct": [1, 0]
 		},
 		{
 			"priv": ["3o", "2d"],
 			"table": ["2s", "1s"],
-			"correct": [false, true]
+			"correct": [0, 1]
 		},
 		{
 			"priv": ["2d", "2o"],
 			"table": ["2s", "2o"],
-			"correct": [true, false]
+			"correct": [1, 0]
 		}				
 	]
 }

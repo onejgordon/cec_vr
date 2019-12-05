@@ -11,6 +11,7 @@ public class ControllerGrab : MonoBehaviour
     private GameObject collidingObject; // 1
     private GameObject objectInHand; // 2
     private ExperimentRunner exp;
+    private HolderBehavior holder;
     private bool inHandZone = false;
 
 
@@ -33,6 +34,7 @@ public class ControllerGrab : MonoBehaviour
 
     void Start() {
         this.exp = GameObject.Find("Camera").GetComponent<ExperimentRunner>();
+        this.holder = GameObject.Find("HandHolder").GetComponent<HolderBehavior>();
     }
 
     // Update is called once per frame
@@ -58,14 +60,18 @@ public class ControllerGrab : MonoBehaviour
 
     }
 
-    // 1
+    public void EnteredHandZone(bool in_zone) {
+        inHandZone = in_zone;
+    }
+
     public void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.name == "HandHolder") inHandZone = true;
+        if (other.gameObject.name == "HandHolder") EnteredHandZone(true);
         SetCollidingObject(other);
         if (this.cardReleasable()) {
             // Colliding with holder while holding card, provide feedback
             this.Vibrate();
+            this.holder.setHighlight(true);
         }
     }
 
@@ -76,7 +82,10 @@ public class ControllerGrab : MonoBehaviour
 
     public void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.name == "HandHolder") inHandZone = false;
+        if (other.gameObject.name == "HandHolder") {
+            EnteredHandZone(false);
+            this.holder.setHighlight(false);
+        }
         if (!collidingObject)
         {
             return;

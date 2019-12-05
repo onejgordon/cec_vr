@@ -28,7 +28,6 @@ public class ExperimentRunner : MonoBehaviour
     public SessionSaver session;
     public Canvas UIcanvas;
     public SteamVR_LaserPointer laserPointer;
-    public Canvas hmdcanvas;
     private List<HandSpec> hands;
     private bool buttons_showing = false;
     public bool record = false;
@@ -38,10 +37,14 @@ public class ExperimentRunner : MonoBehaviour
     private bool adversary_active = false;
     public Transform handholder;
     public Transform table;
+    public UIBehavior ui;
+
+    
 
     // Start is called before the first frame update
     void Start()
     {
+        this.ui = GameObject.Find("UICanvas").GetComponent<UIBehavior>();
         this.hands = new List<HandSpec>();
         string path = "./TrialData/hands.json";
         if(File.Exists(path))
@@ -130,7 +133,6 @@ public class ExperimentRunner : MonoBehaviour
         HandSpec hand = this.hands[hand_index];
         this.current_trial = new SessionTrial(this.trial_index, hand, this.adversary_active);
         GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
-
         MaybeClearHand();
         DealHand();
         // Immediately start decision stage / timer
@@ -138,6 +140,7 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     public void SubjectSelection(int position) {
+        ui.ShowHUDMessage("Trial complete");
         // Score selection and save trial to session
         bool correct_selection = this.current_trial.StoreResponse(position);
         if (this.current_trial.adversarial()) {
@@ -178,20 +181,26 @@ public class ExperimentRunner : MonoBehaviour
         }
     }
 
+
     void BeginDecisionStage() {
-        Debug.Log("Begin decision stage...");
+        ui.ShowHUDCountdownMessage(DECISION_SECS, "Decide on card (but do not yet select)");
         // Show decision prompt
-        ShowButtons();
         Invoke("BeginSelectionStage", DECISION_SECS);
     }
 
     void BeginSelectionStage() {
-        Debug.Log("Begin selection stage, awaiting user choice...");
         // Await user choice
         // Possibly update "adversary watching" indicator
+        // Make table cards grabbable
+        GameObject.Find("CardOnTable0").tag = "Grabbable";
+        GameObject.Find("CardOnTable1").tag = "Grabbable";
+        ui.ClearCountdown();
         GetComponent<Camera>().backgroundColor = SKY_RUNNING;
         if (SELECTION_SECS > -1) {
             Invoke("GotoNextTrial", SELECTION_SECS);
+            ui.ShowHUDCountdownMessage(SELECTION_SECS, "Select your chosen card");
+        } else {
+            ui.ShowHUDMessage("Select your chosen card");
         }
     }
 
@@ -212,8 +221,8 @@ public class ExperimentRunner : MonoBehaviour
         for (int i=0; i<2; i++) {
             string card_id = hs.priv[i];
             float x = CARD_SEP * (i-1);
-            float y = this.handholder.localPosition.y;
-            float z = this.handholder.localPosition.z;
+            float y = this.handholder.position.y;
+            float z = this.handholder.position.z;
             float rot = this.handholder.eulerAngles.x - 90.0f;
             Transform newCard = AddCardToScene(card_id, x, y, z);
             newCard.name = "CardInHand" + i.ToString();
@@ -231,7 +240,7 @@ public class ExperimentRunner : MonoBehaviour
             float y = table_pos.y + table_h/2 + CARD_LIFT;
             float z = table_pos.z - table_rad/2;
             Transform newCard = AddCardToScene(card_id, x, y, z);
-            newCard.gameObject.tag = "Grabbable";
+            newCard.name = "CardOnTable" + i.ToString();
             newCard.GetComponent<CardBehavior>().setPosition(i);
         }
         session.data.hand_specs.Add(hs);
@@ -250,8 +259,10 @@ public class ExperimentRunner : MonoBehaviour
         session.SaveToFile();
         if (record) recording.StopRecording();
         MaybeClearHand();
-        CanvasGroup cg = this.hmdcanvas.GetComponent<CanvasGroup>();
-        cg.alpha = 1;
+        string results = "All trials finished!\n\n";
+        results += string.Format("You were successful in {0} of {1} trials.", this.session.data.total_points, this.session.CountTrials());
+        ui.ShowHUDScreen(results, Color.green);
+        GameObject.Find("Room").SetActive(false);
     }
 
     // -------- Not in Use
@@ -261,22 +272,6 @@ public class ExperimentRunner : MonoBehaviour
         if (this.laserPointer != null) {
             this.laserPointer.color.a = alpha;
         }
-    }
-
-    void HideButtons() {
-        CanvasGroup cg = this.UIcanvas.GetComponent<CanvasGroup>();
-        cg.alpha = 0;
-        cg.interactable = false;
-        this.buttons_showing = false;
-        ShowHideLaser(false);
-    }
-
-    void ShowButtons() {
-        CanvasGroup cg = this.UIcanvas.GetComponent<CanvasGroup>();
-        cg.alpha = 1;
-        cg.interactable = true;
-        this.buttons_showing = true;
-        ShowHideLaser(true);
     }
 
 }

@@ -122,9 +122,13 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void ShowAdversaryInfoThenTrial() {
-        // TODO: Messaging/tutorial on adversary
-        Debug.Log("Following trials will have adversary.");
-        RunOneTrial();
+        string message = "In all following trials, an adversary\n" +
+            "will be tracking your behavior as you decide, and will attempt to predict\n" +
+            "which card you are going to select. On each trial, you will earn a point\n" +
+            "only when you both make a successful set, and when your selection is\n" +
+            "not predicted by the adversary. When ready, click the trigger button\n" +
+            "to start the next trial.";
+        ui.ShowHUDScreenWithConfirm(message, Color.black, "RunOneTrial");
     }
 
     void RunOneTrial() {
@@ -142,17 +146,8 @@ public class ExperimentRunner : MonoBehaviour
     public void SubjectSelection(int position) {
         ui.ShowHUDMessage("Trial complete");
         // Score selection and save trial to session
-        bool correct_selection = this.current_trial.StoreResponse(position);
-        if (this.current_trial.adversarial()) {
-            // Make prediction based on eye fixations
-            int adversary_prediction = 0; // TODO (currently always left)
-            bool avoided_prediction = adversary_prediction != position;
-            bool successful = avoided_prediction && correct_selection;
-            this.current_trial.points += successful ? 1 : 0;
-        } else {
-            bool successful = correct_selection;
-            this.current_trial.points += successful ? 1 : 0;
-        }
+        this.current_trial.StoreResponseAndScore(position);
+        
         session.AddTrial(this.current_trial);
         if (SELECTION_SECS == -1) {
             // No time limit, waiting for user choice

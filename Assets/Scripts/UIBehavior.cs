@@ -2,18 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Valve.VR;
+
 
 
 public class UIBehavior : MonoBehaviour
 {
     public Canvas UIcanvas;
     public GameObject statusHUD;
-
     public GameObject screenText;
     public GameObject screenBG;
-
     private float countdown_secs = 0;
     private string countdown_message = null;
+
+    public SteamVR_Action_Boolean grabAction;
+    
+    // State for confirmation screen
+    private bool waitingForTrigger = false;
+    private string invokeOnCallback;
 
     void Start()
     {
@@ -29,6 +35,13 @@ public class UIBehavior : MonoBehaviour
             if (seconds_left < 0) countdown_secs = 0;
             string message = countdown_message + " - " + seconds_left.ToString();
             ShowHUDMessage(message);
+        }
+
+        // Check for trigger
+        if (waitingForTrigger) {
+            if (grabAction.GetLastStateDown(SteamVR_Input_Sources.Any)) {
+                DismissConfirmationScreen();
+            }
         }
     }
 
@@ -50,6 +63,20 @@ public class UIBehavior : MonoBehaviour
         this.screenBG.SetActive(true);
         this.screenText.GetComponent<Text>().text = message;
         this.screenText.SetActive(true);
+    }
+
+    public void ShowHUDScreenWithConfirm(string message, Color bgcolor,  string callback) {
+        invokeOnCallback = callback;
+        waitingForTrigger = true;
+        ShowHUDScreen(message, bgcolor);
+    }
+
+    public void DismissConfirmationScreen() {
+        HideHUDScreen();
+        ExperimentRunner exp = GameObject.Find("Camera").GetComponent<ExperimentRunner>();
+        exp.Invoke(invokeOnCallback, 0);
+        invokeOnCallback = null;
+        waitingForTrigger = false;
     }
 
     public void HideHUDScreen() {

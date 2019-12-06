@@ -68,6 +68,8 @@ public class SessionTrial
     public int subject_choice;
     public int trial_id;
     public int points = 0;
+    public bool correct = false;
+    public bool avoided_prediction = false; 
     public double ts_start;
     public double ts_choice;
     private bool with_adversary = false;
@@ -85,12 +87,23 @@ public class SessionTrial
         this.hits = new List<RecordedHit>();
     }
 
-    public bool StoreResponse(int pos) {
+    public void StoreResponseAndScore(int pos) {
         this.subject_choice = pos;
         this.ts_choice = Util.timestamp();
         this.choice_made = true;
-        int correct = this.hand.correct[pos];
-        return correct == 1;
+        this.correct = this.hand.correct[pos] == 1;
+
+        // Score
+        if (this.adversarial()) {
+            // Make prediction based on eye fixations
+            int adversary_prediction = 0; // TODO (currently always left)
+            this.avoided_prediction = adversary_prediction != pos;
+            bool successful = this.avoided_prediction && correct;
+            this.points += successful ? 1 : 0;
+        } else {
+            bool successful = correct;
+            this.points += successful ? 1 : 0;
+        }
     }
 
     public bool adversarial() {

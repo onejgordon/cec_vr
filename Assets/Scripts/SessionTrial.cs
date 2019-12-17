@@ -40,8 +40,10 @@ public class RecordedHit {
 public class AllHandSpecs {
 
     public List<HandSpec> hands;
+    public List<HandSpec> practice_hands;
     public AllHandSpecs() {
         this.hands = new List<HandSpec>(); // Empty list
+        this.practice_hands = new List<HandSpec>(); // Empty list
     }
 }
 
@@ -74,16 +76,18 @@ public class SessionTrial
     public double ts_choice;
     private bool with_adversary = false;
     private bool choice_made = false;
+    private bool practice = false;
     public List<RecordedHit> hits;
 
     public HandSpec hand;
 
-    public SessionTrial(int id, HandSpec hand, bool adversary) {
+    public SessionTrial(int id, HandSpec hand, bool adversary, bool practice) {
         this.hand = hand;
         this.trial_id = id;
         this.ts_start = Util.timestamp();
         this.with_adversary = adversary;
         this.points = 0;
+        this.practice = practice;
         this.hits = new List<RecordedHit>();
     }
 
@@ -96,7 +100,7 @@ public class SessionTrial
         // Score
         if (this.adversarial()) {
             // Make prediction based on eye fixations
-            int adversary_prediction = 0; // TODO (currently always left)
+            int adversary_prediction = Random.Range(0, 1); // TODO (currently coin flip)
             this.avoided_prediction = adversary_prediction != pos;
             bool successful = this.avoided_prediction && correct;
             this.points += successful ? 1 : 0;
@@ -108,6 +112,10 @@ public class SessionTrial
 
     public bool adversarial() {
         return this.with_adversary;
+    }
+
+    public bool scored() {
+        return !this.practice;
     }
 
     public bool addHit(string key, Vector3 hitpoint, Quaternion hmd_rot, float conf) {

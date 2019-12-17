@@ -13,6 +13,7 @@ public class MySessionData
     public List<int> hand_order = new List<int>();
 
     public int total_points = 0;
+    public int total_points_possible = 0;
 }
 
 public class SessionSaver : MonoBehaviour {
@@ -25,7 +26,10 @@ public class SessionSaver : MonoBehaviour {
             Debug.Log("Already saved?");
         } else {
             data.trials.Add(trial);
-            data.total_points += trial.points;
+            if (trial.scored()) {
+                data.total_points += trial.points;
+                data.total_points_possible += 1;
+            }
         }
     }
 

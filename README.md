@@ -8,9 +8,6 @@
 
 ## Todo
 
-- Tutorial with real game-play
-- Disable selection during decision phase
-- Confirmation box capability for complex messaging like adversarial notification messages
-- Countdown during selection and decision phases
 - Handle timeout with no selection
 - Show adversary stats at end
+- Data collection from gaze

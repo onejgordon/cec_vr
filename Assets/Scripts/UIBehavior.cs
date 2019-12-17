@@ -12,6 +12,7 @@ public class UIBehavior : MonoBehaviour
     public GameObject statusHUD;
     public GameObject screenText;
     public GameObject screenBG;
+    public GameObject room;
     private float countdown_secs = 0;
     private string countdown_message = null;
 
@@ -63,6 +64,8 @@ public class UIBehavior : MonoBehaviour
         this.screenBG.SetActive(true);
         this.screenText.GetComponent<Text>().text = message;
         this.screenText.SetActive(true);
+        this.room.SetActive(false);
+        this.statusHUD.SetActive(false);
     }
 
     public void ShowHUDScreenWithConfirm(string message, Color bgcolor,  string callback) {
@@ -82,5 +85,7 @@ public class UIBehavior : MonoBehaviour
     public void HideHUDScreen() {
         this.screenBG.SetActive(false);
         this.screenText.SetActive(false);
+        this.room.SetActive(true);
+        this.statusHUD.SetActive(true);
     }
 }

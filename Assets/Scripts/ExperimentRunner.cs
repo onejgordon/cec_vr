@@ -14,7 +14,7 @@ public class ExperimentRunner : MonoBehaviour
     private Color SKY_RUNNING = new Color(0, 80, 150);
     private Color SKY_DEFAULT = new Color(50, 50, 50);
 
-    public int N_TRIALS = 5; // Towers to run
+    public int N_TRIALS = 5; 
     public int MAX_TRIALS = 1; // Set to 0 for production. Just for short debug data collection
     public int SELECTION_SECS = -1; // -1 for infinite time (wait for user choice)
     public int DECISION_SECS = 10; 
@@ -23,21 +23,25 @@ public class ExperimentRunner : MonoBehaviour
     public float CARD_SEP = 0.2f;
     private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
+    private int practice_remaining = 2; // 0 to disable practice
     private SessionTrial current_trial;
     public Transform card;
     public SessionSaver session;
-    public Canvas UIcanvas;
     public SteamVR_LaserPointer laserPointer;
     private List<HandSpec> hands;
-    private bool buttons_showing = false;
+    private List<HandSpec> practice_hands;
     public bool record = false;
     private List<Transform> cards = new List<Transform>();
     private List<int> hand_order = new List<int>();
     private string condition = null; // "immediate" or "delayed"
     private bool adversary_active = false;
+    private bool practicing = false;
     public Transform handholder;
     public Transform table;
     public UIBehavior ui;
+    public GameObject room;
+
+    private Color DGREEN = new Color(0.0f, 0.0f, 0.6f);
 
     
 
@@ -50,7 +54,10 @@ public class ExperimentRunner : MonoBehaviour
         if(File.Exists(path))
         {
             string dataAsJson = File.ReadAllText(path);
-            this.hands = JsonUtility.FromJson<AllHandSpecs>(dataAsJson).hands;
+            AllHandSpecs ahs = JsonUtility.FromJson<AllHandSpecs>(dataAsJson);
+            this.hands = ahs.hands;
+            this.practice_hands = ahs.practice_hands;
+            if (this.practice_hands.Count > 0) this.practicing = true;
             this.RandomizeTrialOrder();
             N_TRIALS = this.hands.Count;
             Debug.Log(string.Format("Loaded {0} hands from {1}", this.hands.Count, path));
@@ -69,6 +76,7 @@ public class ExperimentRunner : MonoBehaviour
 
     private void randomize_condition() {
         int c = Random.Range(0, 1);
+        c = 1; // TODO: remove
         if (c == 0) { this.condition = "immediate"; }
         else { this.condition = "delayed"; }
         Debug.Log("Condition: " + this.condition);
@@ -133,14 +141,42 @@ public class ExperimentRunner : MonoBehaviour
 
     void RunOneTrial() {
         Debug.Log("Running trial " + this.trial_index.ToString());
-        int hand_index = this.hand_order[this.trial_index - 1];
-        HandSpec hand = this.hands[hand_index];
-        this.current_trial = new SessionTrial(this.trial_index, hand, this.adversary_active);
+        HandSpec hand;
+        bool first_real = false;
+        if (this.practice_remaining > 0) {
+            hand = this.practice_hands[practice_remaining - 1];
+            this.practice_remaining -= 1;
+        } else {
+            int hand_index = this.hand_order[this.trial_index - 1];
+            hand = this.hands[hand_index];
+            if (this.practicing) {
+                this.practicing = false;
+                first_real = true;
+            }
+        }
+        this.current_trial = new SessionTrial(this.trial_index, hand, this.adversary_active, this.practicing);
         GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
         MaybeClearHand();
         DealHand();
-        // Immediately start decision stage / timer
-        BeginDecisionStage();
+        if (this.practicing) {
+            int prounds = this.practice_hands.Count;
+            ui.ShowHUDScreenWithConfirm(
+                string.Format(
+                    "This is practice round {0} of {1}. Click your controller trigger to proceed.",
+                    prounds - this.practice_remaining,
+                    prounds
+                ),
+                Color.black, "BeginDecisionStage");
+        } else {
+            if (first_real) {
+                // Show message indicating we're starting real trials
+                ui.ShowHUDScreenWithConfirm("Great job. Practice rounds finished. Remaining trials are real. Click your controller trigger to proceed.", 
+                DGREEN, "BeginDecisionStage");
+            } else {
+                // Immediately start decision stage / timer
+                BeginDecisionStage();
+            }
+        }
     }
 
     public void SubjectSelection(int position) {
@@ -244,6 +280,7 @@ public class ExperimentRunner : MonoBehaviour
     private Transform AddCardToScene(string id, float x, float y, float z) {
         Transform newCard = Instantiate(card, new Vector3(x, y, z), Quaternion.Euler(0, 90, 90));
         newCard.GetComponent<CardBehavior>().setID(id);
+        newCard.SetParent(room.GetComponent<Transform>());
         Util.AddCardPattern(newCard, id);
         this.cards.Add(newCard);
         return newCard;

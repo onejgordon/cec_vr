@@ -8,24 +8,33 @@ using System.IO;
 [System.Serializable]
 public class MySessionData
 {
-    public List<SessionTrial> trials = new List<SessionTrial>();
+    private List<SessionTrial> trials = new List<SessionTrial>();
     public List<HandSpec> hand_specs = new List<HandSpec>();
     public List<int> hand_order = new List<int>();
 
     public int total_points = 0;
     public int total_points_possible = 0;
+
+    public int CountTrials() {
+        return this.trials.Count;
+    }
+
+    public void AddTrial(SessionTrial trial) {
+        this.trials.Add(trial);
+    }
 }
 
 public class SessionSaver : MonoBehaviour {
-    const string OUTDIR = "./TrialData/";
+    public const string OUTDIR = "./ExperimentData/TrialData/";
+    public string session_id;
 
     public MySessionData data = new MySessionData();
 
     public void AddTrial(SessionTrial trial) {
-        if (data.trials.Count >= trial.trial_id) {
+        if (data.CountTrials() >= trial.trial_id) {
             Debug.Log("Already saved?");
         } else {
-            data.trials.Add(trial);
+            data.AddTrial(trial);
             if (trial.scored()) {
                 data.total_points += trial.points;
                 data.total_points_possible += 1;
@@ -34,11 +43,11 @@ public class SessionSaver : MonoBehaviour {
     }
 
     public int CountTrials() {
-        return data.trials.Count;
+        return data.CountTrials();
     }
 
     public string outfile() {
-        return OUTDIR + "session_data_" + ((int)(Util.timestamp())).ToString() + ".json";
+        return OUTDIR + "session_" + this.session_id + "_meta.json";
     }
 
     public void SaveToFile() {

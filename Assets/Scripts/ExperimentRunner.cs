@@ -5,12 +5,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using Valve.VR.Extras;
 using System.IO;
-using PupilLabs;
+using Tobii.XR;
 
-[RequireComponent(typeof(RecordingController))]
 public class ExperimentRunner : MonoBehaviour
 {
-    RecordingController recording;
     private Color SKY_RUNNING = new Color(0, 80, 150);
     private Color SKY_DEFAULT = new Color(50, 50, 50);
 
@@ -19,11 +17,13 @@ public class ExperimentRunner : MonoBehaviour
     public int SELECTION_SECS = -1; // -1 for infinite time (wait for user choice)
     public int DECISION_SECS = 10; 
     public int ADVERSARY_DELAY_MINS = 10;
+    public int ADVERSARY_FORCE_AFTER_ROUNDS = 2; // Set to -1 to not force (for production)
     public int EXP_MAX_MINS = 25;
     public float CARD_SEP = 0.2f;
     private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
-    private int practice_remaining = 2; // 0 to disable practice
+    public int practice_rounds = 2;
+    private int practice_remaining = 0; // 0 to disable practice
     private SessionTrial current_trial;
     public Transform card;
     public SessionSaver session;
@@ -31,6 +31,7 @@ public class ExperimentRunner : MonoBehaviour
     private List<HandSpec> hands;
     private List<HandSpec> practice_hands;
     public bool record = false;
+    private bool recording = false;
     private List<Transform> cards = new List<Transform>();
     private List<int> hand_order = new List<int>();
     private string condition = null; // "immediate" or "delayed"
@@ -40,6 +41,9 @@ public class ExperimentRunner : MonoBehaviour
     public Transform table;
     public UIBehavior ui;
     public GameObject room;
+    private string session_id;
+    private Transform hmdCamera;
+    private Transform controller;
 
     private Color DGREEN = new Color(0.0f, 0.0f, 0.6f);
 
@@ -48,9 +52,14 @@ public class ExperimentRunner : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        this.session_id = ((int)Util.timestamp()).ToString();
+        this.session.session_id = this.session_id;
+        this.practice_remaining = this.practice_rounds;
         this.ui = GameObject.Find("UICanvas").GetComponent<UIBehavior>();
+        this.hmdCamera = GameObject.Find("Camera").GetComponent<Transform>();
+        this.controller = GameObject.FindGameObjectWithTag("Controller").GetComponent<Transform>();
         this.hands = new List<HandSpec>();
-        string path = "./TrialData/hands.json";
+        string path = "./ExperimentData/hands.json";
         if(File.Exists(path))
         {
             string dataAsJson = File.ReadAllText(path);
@@ -62,16 +71,26 @@ public class ExperimentRunner : MonoBehaviour
             N_TRIALS = this.hands.Count;
             Debug.Log(string.Format("Loaded {0} hands from {1}", this.hands.Count, path));
         } else Debug.Log(string.Format("{0} doesn't exist", path));
-        if (record) recording = GetComponent<RecordingController>();
-        this.ShowHideLaser(false);
         this.randomize_condition();
         this.BeginExperiment();
     }
 
     // Update is called once per frame
     void Update()
-    {
-
+    {  
+        if (recording) {
+            Quaternion hmdRot = hmdCamera.rotation;
+            Quaternion ctrlRot = controller.rotation;
+            Vector3 gazeOrigin = new Vector3();
+            Vector3 gazeDirection = new Vector3();
+            var eyeTrackingData = TobiiXR.GetEyeTrackingData(TobiiXR_TrackingSpace.World);
+            if (eyeTrackingData.GazeRay.IsValid) {
+                gazeOrigin = eyeTrackingData.GazeRay.Origin;
+                gazeDirection = eyeTrackingData.GazeRay.Direction;
+            } 
+            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection);
+            this.current_trial.addRecord(record);
+        }
     }
 
     private void randomize_condition() {
@@ -97,10 +116,18 @@ public class ExperimentRunner : MonoBehaviour
 
     public void BeginExperiment() {
         if (record) {
-            recording.StartRecording();
+            StartRecording();
         }
         this.ts_exp_start = Util.timestamp();
         GotoNextTrial();
+    }
+
+    public void StartRecording() {
+        this.recording = true;
+    }
+
+    public void StopRecording() {
+        this.recording = false;
     }
 
     public void GotoNextTrial() {
@@ -111,7 +138,9 @@ public class ExperimentRunner : MonoBehaviour
         if (!this.adversary_active) {
             if (this.condition == "delayed") {
                 // Check to see if we should activate adversary (X minutes passed)
-                activate = mins > ADVERSARY_DELAY_MINS;
+                int real_rounds_in = this.trial_index - this.practice_rounds - 1;
+                bool force_adversary = ADVERSARY_FORCE_AFTER_ROUNDS > -1 && real_rounds_in == ADVERSARY_FORCE_AFTER_ROUNDS;
+                activate = mins > ADVERSARY_DELAY_MINS || force_adversary;
             } else {
                 // Immediate, activate now
                 activate = true;
@@ -122,7 +151,7 @@ public class ExperimentRunner : MonoBehaviour
             show_adversary_info = true;
         }
         
-        if (mins > EXP_MAX_MINS || this.trial_index > this.hand_order.Count) Finish();
+        if (mins > EXP_MAX_MINS || this.trial_index > this.hands.Count + this.practice_hands.Count) Finish();
         else {
             if (show_adversary_info) ShowAdversaryInfoThenTrial(); // Calls RunOneTrial
             else RunOneTrial();
@@ -144,17 +173,19 @@ public class ExperimentRunner : MonoBehaviour
         HandSpec hand;
         bool first_real = false;
         if (this.practice_remaining > 0) {
+            // Get a practice hand
             hand = this.practice_hands[practice_remaining - 1];
             this.practice_remaining -= 1;
         } else {
-            int hand_index = this.hand_order[this.trial_index - 1];
+            // Get a real hand
+            int hand_index = this.hand_order[this.trial_index - this.practice_rounds - 1];
             hand = this.hands[hand_index];
             if (this.practicing) {
                 this.practicing = false;
                 first_real = true;
             }
         }
-        this.current_trial = new SessionTrial(this.trial_index, hand, this.adversary_active, this.practicing);
+        this.current_trial = new SessionTrial(this.session_id, this.trial_index, hand, this.adversary_active, this.practicing);
         GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
         MaybeClearHand();
         DealHand();
@@ -182,8 +213,9 @@ public class ExperimentRunner : MonoBehaviour
     public void SubjectSelection(int position) {
         ui.ShowHUDMessage("Trial complete");
         // Score selection and save trial to session
-        this.current_trial.StoreResponseAndScore(position);
-        
+        this.current_trial.StoreResponseAndScore(position);        
+        this.current_trial.SaveToFile();
+        this.current_trial.CleanUpData(); // Deletes large data once saved
         session.AddTrial(this.current_trial);
         if (SELECTION_SECS == -1) {
             // No time limit, waiting for user choice
@@ -204,15 +236,6 @@ public class ExperimentRunner : MonoBehaviour
         return this.current_trial;
     }
 
-    public void RecordHit(string hitKey, RaycastHit hit, float conf) {
-        // Debug.Log("Hit " + hitKey);
-        Vector3 hitpoint = hit.point;
-        if (this.current_trial != null) {
-            this.current_trial.addHit(hitKey, hitpoint, GetComponent<Camera>().transform.rotation, conf);
-        }
-    }
-
-
     void BeginDecisionStage() {
         ui.ShowHUDCountdownMessage(DECISION_SECS, "Decide on card (but do not yet select)");
         // Show decision prompt
@@ -223,6 +246,7 @@ public class ExperimentRunner : MonoBehaviour
         // Await user choice
         // Possibly update "adversary watching" indicator
         // Make table cards grabbable
+        this.current_trial.StartSelection();
         GameObject.Find("CardOnTable0").tag = "Grabbable";
         GameObject.Find("CardOnTable1").tag = "Grabbable";
         ui.ClearCountdown();
@@ -289,21 +313,11 @@ public class ExperimentRunner : MonoBehaviour
     void Finish() {
         Debug.Log("Done, saving...");
         session.SaveToFile();
-        if (record) recording.StopRecording();
+        if (record) StopRecording();
         MaybeClearHand();
         string results = "All trials finished!\n\n";
-        results += string.Format("You were successful in {0} of {1} trials.", this.session.data.total_points, this.session.CountTrials());
+        results += string.Format("You were successful in {0} of {1} trials.\n\nYour experimenter will help you take off the VR headset.", this.session.data.total_points, this.session.data.total_points_possible);
         ui.ShowHUDScreen(results, Color.green);
-        GameObject.Find("Room").SetActive(false);
-    }
-
-    // -------- Not in Use
-
-    void ShowHideLaser(bool show) {
-        float alpha = show ? 1 : 0;
-        if (this.laserPointer != null) {
-            this.laserPointer.color.a = alpha;
-        }
     }
 
 }

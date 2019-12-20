@@ -1,115 +1,46 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Tobii.G2OM;
+using Tobii.XR;
 
-namespace PupilLabs
+public class LookHandler : MonoBehaviour, IGazeFocusable 
 {
-    public class LookHandler : MonoBehaviour
+    private ExperimentRunner exp;
+    public bool recordDetailedHits = false;
+    bool gazedAt = false;
+    double last_gaze_start_ts = 0.0f;
+
+    void Start() {
+        this.exp = GameObject.Find("Camera").GetComponent<ExperimentRunner>();
+    }
+    void Update()
     {
-        public SubscriptionsController subscriptionsController;
-        public Transform cameraTransform;
-        public ExperimentRunner runner;
-
-        [Header("Settings")]
-        [Range(0f, 1f)]
-        public float confidenceThreshold = 0.6f;
-
-        [Header("Projected Visualization")]
-        public float sphereCastRadius = 0.05f;
-
-        GazeListener gazeListener = null;
-        Vector3 localGazeDirection;
-        float gazeDistance;
-        bool isGazing = false;
-
-        void OnEnable()
-        {
-            StartLooking();
-        }
-
-        void OnDisable()
-        {
-            StopLooking();
-        }
-
-        void Update()
-        {
-            if (!isGazing)
-            {
-                return;
-            }
-        }
-
-        public void StartLooking()
-        {
-            Debug.Log("Start looking");
-
-            if (subscriptionsController == null)
-            {
-                Debug.LogError("SubscriptionController missing");
-                return;
-            }
-
-
-            if (cameraTransform == null)
-            {
-                Debug.LogError("Camera reference missing");
-                enabled = false;
-                return;
-            }
-
-            if (gazeListener == null)
-            {
-                gazeListener = new GazeListener(subscriptionsController);
-            }
-
-            gazeListener.OnReceive3dGaze += ReceiveGaze;
-            isGazing = true;
-        }
-
-        public void StopLooking()
-        {
-            isGazing = false;
-
-            if (gazeListener != null)
-            {
-                gazeListener.OnReceive3dGaze -= ReceiveGaze;
-            }
-
-        }
-
-        void ReceiveGaze(GazeData gazeData)
-        {
-            if (gazeData.Confidence >= confidenceThreshold)
-            {
-                localGazeDirection = gazeData.GazeDirection;
-                gazeDistance = gazeData.GazeDistance;
-                this.RayCastAndStoreHitPoint(gazeData.Confidence);
-            }
-        }
-
-        void RayCastAndStoreHitPoint(float confidence) {
-            Vector3 origin = cameraTransform.position;
-            Vector3 direction = cameraTransform.TransformDirection(localGazeDirection);
-
-            if (Physics.SphereCast(origin, sphereCastRadius, direction, out RaycastHit hit, Mathf.Infinity))
-            {
-                Debug.DrawRay(origin, direction * hit.distance, Color.yellow);
-                GameObject objectHit = hit.transform.gameObject;
-                bool bg = objectHit.name == "BackStop" || objectHit.name == "Ground";
-                if (bg) {
-                    runner.RecordHit(objectHit.name.ToLower(), hit, confidence);
-                } else {
-                    CardBehavior beh = objectHit.GetComponent<CardBehavior>();
-                    if (beh != null) {
-                        // Hit a block
-                        runner.RecordHit("block" + beh.getBlockId().ToString(), hit, confidence);
-                    }
-                }
-
-            }
-
+        if (gazedAt && this.recordDetailedHits) {
+            // Get eye tracking data in world space
+            var eyeTrackingData = TobiiXR.GetEyeTrackingData(TobiiXR_TrackingSpace.World);
+            
+            // Check if gaze ray is valid
+            if (eyeTrackingData.GazeRay.IsValid) {
+                // The origin of the gaze ray is a 3D point
+                var rayOrigin = eyeTrackingData.GazeRay.Origin;
+                // The direction of the gaze ray is a normalized direction vector
+                var rayDirection = eyeTrackingData.GazeRay.Direction;
+            }   
         }
 
     }
+
+    public void GazeFocusChanged(bool focused) {
+        this.gazedAt = focused;
+        if (focused) {
+            // Start gaze timer
+            this.last_gaze_start_ts = Util.timestamp();
+        } else {
+            // Stop gaze timer and record fixation
+            exp.getCurrentTrial().addFixation(gameObject.name, this.last_gaze_start_ts, Util.timestamp());
+        }
+    }
+
 }
+

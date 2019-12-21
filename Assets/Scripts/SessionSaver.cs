@@ -12,6 +12,8 @@ public class MySessionData
     public List<HandSpec> hand_specs = new List<HandSpec>();
     public List<int> hand_order = new List<int>();
 
+    public string session_id;
+    public bool left_handed = false;
     public int total_points = 0;
     public int total_points_possible = 0;
 
@@ -26,7 +28,6 @@ public class MySessionData
 
 public class SessionSaver : MonoBehaviour {
     public const string OUTDIR = "./ExperimentData/TrialData/";
-    public string session_id;
 
     public MySessionData data = new MySessionData();
 
@@ -47,7 +48,7 @@ public class SessionSaver : MonoBehaviour {
     }
 
     public string outfile() {
-        return OUTDIR + "session_" + this.session_id + "_meta.json";
+        return OUTDIR + "session_" + this.data.session_id + "_meta.json";
     }
 
     public void SaveToFile() {

@@ -12,13 +12,14 @@ public class ExperimentRunner : MonoBehaviour
     private Color SKY_RUNNING = new Color(0, 80, 150);
     private Color SKY_DEFAULT = new Color(50, 50, 50);
 
-    public int N_TRIALS = 5; 
+    public int N_TRIALS = 5;
     public int MAX_TRIALS = 1; // Set to 0 for production. Just for short debug data collection
-    public int SELECTION_SECS = -1; // -1 for infinite time (wait for user choice)
-    public int DECISION_SECS = 10; 
+    public int PICKUP_SECS = -1; // -1 for infinite time (wait for user choice)
+    public int DECISION_SECS = 10;
     public int ADVERSARY_DELAY_MINS = 10;
     public int ADVERSARY_FORCE_AFTER_ROUNDS = 2; // Set to -1 to not force (for production)
     public int EXP_MAX_MINS = 25;
+    public bool left_handed = false;
     public float CARD_SEP = 0.2f;
     private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
@@ -47,13 +48,12 @@ public class ExperimentRunner : MonoBehaviour
 
     private Color DGREEN = new Color(0.0f, 0.0f, 0.6f);
 
-    
-
     // Start is called before the first frame update
     void Start()
     {
         this.session_id = ((int)Util.timestamp()).ToString();
-        this.session.session_id = this.session_id;
+        this.session.data.session_id = this.session_id;
+        this.session.data.left_handed = this.left_handed;
         this.practice_remaining = this.practice_rounds;
         this.ui = GameObject.Find("UICanvas").GetComponent<UIBehavior>();
         this.hmdCamera = GameObject.Find("Camera").GetComponent<Transform>();
@@ -77,7 +77,7 @@ public class ExperimentRunner : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {  
+    {
         if (recording) {
             Quaternion hmdRot = hmdCamera.rotation;
             Quaternion ctrlRot = controller.rotation;
@@ -87,7 +87,7 @@ public class ExperimentRunner : MonoBehaviour
             if (eyeTrackingData.GazeRay.IsValid) {
                 gazeOrigin = eyeTrackingData.GazeRay.Origin;
                 gazeDirection = eyeTrackingData.GazeRay.Direction;
-            } 
+            }
             Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection);
             this.current_trial.addRecord(record);
         }
@@ -150,7 +150,7 @@ public class ExperimentRunner : MonoBehaviour
             this.adversary_active = true;
             show_adversary_info = true;
         }
-        
+
         if (mins > EXP_MAX_MINS || this.trial_index > this.hands.Count + this.practice_hands.Count) Finish();
         else {
             if (show_adversary_info) ShowAdversaryInfoThenTrial(); // Calls RunOneTrial
@@ -193,7 +193,7 @@ public class ExperimentRunner : MonoBehaviour
             int prounds = this.practice_hands.Count;
             ui.ShowHUDScreenWithConfirm(
                 string.Format(
-                    "This is practice round {0} of {1}. Click your controller trigger to proceed.",
+                    "This is practice round {0} of {1}. Try selecting a card and bringing it to your hand. Your choice on these rounds wont affect your score. Click your controller trigger to proceed.",
                     prounds - this.practice_remaining,
                     prounds
                 ),
@@ -201,7 +201,7 @@ public class ExperimentRunner : MonoBehaviour
         } else {
             if (first_real) {
                 // Show message indicating we're starting real trials
-                ui.ShowHUDScreenWithConfirm("Great job. Practice rounds finished. Remaining trials are real. Click your controller trigger to proceed.", 
+                ui.ShowHUDScreenWithConfirm("Great job. Practice rounds finished. All remaining trials are real and will be scored. Click your controller trigger to proceed.",
                 DGREEN, "BeginDecisionStage");
             } else {
                 // Immediately start decision stage / timer
@@ -213,11 +213,11 @@ public class ExperimentRunner : MonoBehaviour
     public void SubjectSelection(int position) {
         ui.ShowHUDMessage("Trial complete");
         // Score selection and save trial to session
-        this.current_trial.StoreResponseAndScore(position);        
+        this.current_trial.StoreResponseAndScore(position);
         this.current_trial.SaveToFile();
         this.current_trial.CleanUpData(); // Deletes large data once saved
         session.AddTrial(this.current_trial);
-        if (SELECTION_SECS == -1) {
+        if (PICKUP_SECS == -1) {
             // No time limit, waiting for user choice
             // So, now go to next trial after short delay
             Invoke("GotoNextTrial", 2);
@@ -239,10 +239,10 @@ public class ExperimentRunner : MonoBehaviour
     void BeginDecisionStage() {
         ui.ShowHUDCountdownMessage(DECISION_SECS, "Decide on card (but do not yet select)");
         // Show decision prompt
-        Invoke("BeginSelectionStage", DECISION_SECS);
+        Invoke("BeginPickupStage", DECISION_SECS);
     }
 
-    void BeginSelectionStage() {
+    void BeginPickupStage() {
         // Await user choice
         // Possibly update "adversary watching" indicator
         // Make table cards grabbable
@@ -251,11 +251,11 @@ public class ExperimentRunner : MonoBehaviour
         GameObject.Find("CardOnTable1").tag = "Grabbable";
         ui.ClearCountdown();
         GetComponent<Camera>().backgroundColor = SKY_RUNNING;
-        if (SELECTION_SECS > -1) {
-            Invoke("GotoNextTrial", SELECTION_SECS);
-            ui.ShowHUDCountdownMessage(SELECTION_SECS, "Select your chosen card");
+        if (PICKUP_SECS > -1) {
+            Invoke("GotoNextTrial", PICKUP_SECS);
+            ui.ShowHUDCountdownMessage(PICKUP_SECS, "Pick up your chosen card");
         } else {
-            ui.ShowHUDMessage("Select your chosen card");
+            ui.ShowHUDMessage("Pick up your chosen card");
         }
     }
 
@@ -275,7 +275,7 @@ public class ExperimentRunner : MonoBehaviour
         // Deal cards to private hand
         for (int i=0; i<2; i++) {
             string card_id = hs.priv[i];
-            float x = CARD_SEP * (i-1);
+            float x = 2 * CARD_SEP * (i-1);
             float y = this.handholder.position.y;
             float z = this.handholder.position.z;
             float rot = this.handholder.eulerAngles.x - 90.0f;
@@ -283,7 +283,7 @@ public class ExperimentRunner : MonoBehaviour
             newCard.name = "CardInHand" + i.ToString();
             // Kinematic to freeze, and don't need gravity on private cards
             Rigidbody rb = newCard.GetComponent<Rigidbody>();
-            rb.useGravity = false; 
+            rb.useGravity = false;
             rb.isKinematic = true;
             newCard.Rotate(new Vector3(0, 0, rot), Space.Self);
             newCard.Translate(0.02f, 0.004f, 0.0f);
@@ -291,7 +291,7 @@ public class ExperimentRunner : MonoBehaviour
         // Deal cards to table
         for (int i=0; i<2; i++) {
             string card_id = hs.table[i];
-            float x = -CARD_SEP/2 + CARD_SEP * i;
+            float x = -2 * CARD_SEP/2 + CARD_SEP * i;
             float y = table_pos.y + table_h/2 + CARD_LIFT;
             float z = table_pos.z - table_rad/2;
             Transform newCard = AddCardToScene(card_id, x, y, z);

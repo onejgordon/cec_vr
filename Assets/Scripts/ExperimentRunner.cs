@@ -99,6 +99,7 @@ public class ExperimentRunner : MonoBehaviour
         if (c == 0) { this.condition = "immediate"; }
         else { this.condition = "delayed"; }
         Debug.Log("Condition: " + this.condition);
+        this.session.data.condition = this.condition;
     }
 
     private double minutes_in() {

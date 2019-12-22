@@ -129,9 +129,9 @@ public class ControllerGrab : MonoBehaviour
             if (this.cardReleasable()) {
                 // Releasing card into hand
                 // Snap to holder position
-                GameObject centerHandCard = GameObject.Find("CardInHand1");
-                objectInHand.transform.localPosition = centerHandCard.transform.localPosition + new Vector3(exp.CARD_SEP, 0, 0);
-                objectInHand.transform.localRotation = centerHandCard.transform.localRotation;
+                GameObject placeholder = GameObject.Find("Placeholder");
+                objectInHand.transform.position = placeholder.transform.position;
+                objectInHand.transform.rotation = placeholder.transform.rotation;
 
                 // Save subject selection for this trial and move on
                 bool left = objectInHand.GetComponent<CardBehavior>().isLeft();

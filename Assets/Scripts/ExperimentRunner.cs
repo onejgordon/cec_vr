@@ -9,12 +9,12 @@ using Tobii.XR;
 
 public class ExperimentRunner : MonoBehaviour
 {
-    private Color SKY_RUNNING = new Color(0, 80, 150);
-    private Color SKY_DEFAULT = new Color(50, 50, 50);
+    private Color SKY_ADVERSARY = new Color(200, 0, 0);
+    private Color SKY_DEFAULT = new Color(150, 150, 150);
 
-    public int N_TRIALS = 5;
-    public int MAX_TRIALS = 1; // Set to 0 for production. Just for short debug data collection
-    public int PICKUP_SECS = -1; // -1 for infinite time (wait for user choice)
+    private int N_TRIALS = 5;
+    public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
+    public int PICKUP_SECS = 4; // -1 for infinite time (wait for user choice)
     public int DECISION_SECS = 10;
     public int ADVERSARY_DELAY_MINS = 10;
     public int ADVERSARY_FORCE_AFTER_ROUNDS = 2; // Set to -1 to not force (for production)
@@ -186,7 +186,6 @@ public class ExperimentRunner : MonoBehaviour
             }
         }
         this.current_trial = new SessionTrial(this.session_id, this.trial_index, hand, this.adversary_active, this.practicing);
-        GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
         MaybeClearHand();
         DealHand();
         if (this.practicing) {
@@ -237,7 +236,8 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void BeginDecisionStage() {
-        ui.ShowHUDCountdownMessage(DECISION_SECS, "Decide on card (but do not yet select)");
+        GetComponent<Camera>().backgroundColor = this.current_trial.adversarial() ? SKY_ADVERSARY : SKY_DEFAULT;
+        ui.ShowHUDCountdownMessage(DECISION_SECS, "Decision... ");
         // Show decision prompt
         Invoke("BeginPickupStage", DECISION_SECS);
     }
@@ -245,17 +245,16 @@ public class ExperimentRunner : MonoBehaviour
     void BeginPickupStage() {
         // Await user choice
         // Possibly update "adversary watching" indicator
-        // Make table cards grabbable
         this.current_trial.StartSelection();
         GameObject.Find("CardOnTable0").tag = "Grabbable";
         GameObject.Find("CardOnTable1").tag = "Grabbable";
         ui.ClearCountdown();
-        GetComponent<Camera>().backgroundColor = SKY_RUNNING;
+        GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
         if (PICKUP_SECS > -1) {
             Invoke("GotoNextTrial", PICKUP_SECS);
-            ui.ShowHUDCountdownMessage(PICKUP_SECS, "Pick up your chosen card");
+            ui.ShowHUDCountdownMessage(PICKUP_SECS, "Pick up card");
         } else {
-            ui.ShowHUDMessage("Pick up your chosen card");
+            ui.ShowHUDMessage("Pick up card");
         }
     }
 
@@ -275,7 +274,7 @@ public class ExperimentRunner : MonoBehaviour
         // Deal cards to private hand
         for (int i=0; i<2; i++) {
             string card_id = hs.priv[i];
-            float x = 2 * CARD_SEP * (i-1);
+            float x = -0.2f + 2 * CARD_SEP * i;
             float y = this.handholder.position.y;
             float z = this.handholder.position.z;
             float rot = this.handholder.eulerAngles.x - 90.0f;
@@ -291,7 +290,7 @@ public class ExperimentRunner : MonoBehaviour
         // Deal cards to table
         for (int i=0; i<2; i++) {
             string card_id = hs.table[i];
-            float x = -2 * CARD_SEP/2 + CARD_SEP * i;
+            float x = CARD_SEP * (i-0.5f);
             float y = table_pos.y + table_h/2 + CARD_LIFT;
             float z = table_pos.z - table_rad/2;
             Transform newCard = AddCardToScene(card_id, x, y, z);

@@ -14,7 +14,22 @@
 			"priv": ["2d", "2o"],
 			"table": ["2s", "2o"],
 			"correct": [1, 0]
-		}				
+		},
+		{
+			"priv": ["3o", "1s"],
+			"table": ["3s", "2d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1o", "1s"],
+			"table": ["1d", "1o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["3d", "2o"],
+			"table": ["1s", "3s"],
+			"correct": [1, 0]
+		}
 	],
 	"practice_hands": [
 		{

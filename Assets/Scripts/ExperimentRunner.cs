@@ -14,10 +14,11 @@ public class ExperimentRunner : MonoBehaviour
 
     private int N_TRIALS = 5;
     public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
-    public int PICKUP_SECS = 4; // -1 for infinite time (wait for user choice)
-    public int DECISION_SECS = 10;
-    public int ADVERSARY_DELAY_MINS = 10;
-    public int ADVERSARY_FORCE_AFTER_ROUNDS = 2; // Set to -1 to not force (for production)
+    private int DECISION_SECS = 10;
+    private int PICKUP_SECS = 4; // -1 for infinite time (wait for user choice)
+    private int ADVERSARY_ROUNDS_IMMEDIATE = 3; // 3, ~ 1 minute
+    private int ADVERSARY_ROUNDS_DELAYED = 5; // 15, ~ 5 minutes 
+
     public int EXP_MAX_MINS = 25;
     public bool left_handed = false;
     public float CARD_SEP = 0.2f;
@@ -71,6 +72,7 @@ public class ExperimentRunner : MonoBehaviour
             N_TRIALS = this.hands.Count;
             Debug.Log(string.Format("Loaded {0} hands from {1}", this.hands.Count, path));
         } else Debug.Log(string.Format("{0} doesn't exist", path));
+        TobiiXR.Start();
         this.randomize_condition();
         this.BeginExperiment();
     }
@@ -83,14 +85,25 @@ public class ExperimentRunner : MonoBehaviour
             Quaternion ctrlRot = controller.rotation;
             Vector3 gazeOrigin = new Vector3();
             Vector3 gazeDirection = new Vector3();
+            bool eitherEyeClosed = false;
             var eyeTrackingData = TobiiXR.GetEyeTrackingData(TobiiXR_TrackingSpace.World);
             if (eyeTrackingData.GazeRay.IsValid) {
                 gazeOrigin = eyeTrackingData.GazeRay.Origin;
                 gazeDirection = eyeTrackingData.GazeRay.Direction;
             }
-            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection);
+            eitherEyeClosed = eyeTrackingData.IsLeftEyeBlinking || eyeTrackingData.IsRightEyeBlinking;
+            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection, eitherEyeClosed);
             this.current_trial.addRecord(record);
         }
+    }
+
+    public void Calibrate() {
+        
+    }
+
+    private int non_adversary_rounds() {
+        if (this.condition == "delayed") return ADVERSARY_ROUNDS_DELAYED;
+        else return ADVERSARY_ROUNDS_IMMEDIATE;
     }
 
     private void randomize_condition() {
@@ -116,37 +129,24 @@ public class ExperimentRunner : MonoBehaviour
 
     public void BeginExperiment() {
         if (record) {
-            StartRecording();
+            this.recording = true;
         }
         this.ts_exp_start = Util.timestamp();
         GotoNextTrial();
     }
 
-    public void StartRecording() {
-        this.recording = true;
-    }
-
-    public void StopRecording() {
-        this.recording = false;
-    }
-
     public void GotoNextTrial() {
         this.trial_index += 1;
         bool show_adversary_info = false;
-        bool activate = false;
+        bool activate_adversary = false;
         double mins = this.minutes_in();
         if (!this.adversary_active) {
-            if (this.condition == "delayed") {
-                // Check to see if we should activate adversary (X minutes passed)
-                int real_rounds_in = this.trial_index - this.practice_rounds - 1;
-                bool force_adversary = ADVERSARY_FORCE_AFTER_ROUNDS > -1 && real_rounds_in == ADVERSARY_FORCE_AFTER_ROUNDS;
-                activate = mins > ADVERSARY_DELAY_MINS || force_adversary;
-            } else {
-                // Immediate, activate now
-                activate = true;
-            }
+            // Check to see if we should activate adversary
+            // Logic: EITHER X minutes passed OR Y rounds done
+            int real_rounds_in = this.trial_index - this.practice_rounds;
+            activate_adversary = real_rounds_in == this.non_adversary_rounds();
         }
-        if (activate) {
+        if (activate_adversary) {
             this.adversary_active = true;
             show_adversary_info = true;
         }
@@ -159,13 +159,14 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void ShowAdversaryInfoThenTrial() {
-        string message = "In all following trials, an adversary\n" +
-            "will be tracking your behavior as you decide, and will attempt to predict\n" +
-            "which card you are going to select. On each trial, you will earn a point\n" +
-            "only when you both make a successful set, and when your selection is\n" +
-            "not predicted by the adversary. When ready, click the trigger button\n" +
-            "to start the next trial.";
-        ui.ShowHUDScreenWithConfirm(message, Color.black, "RunOneTrial");
+        // string message = "In all following trials, an adversary\n" +
+        //     "will be tracking your behavior as you decide, and will attempt to predict\n" +
+        //     "which card you are going to select. On each trial, you will earn a point\n" +
+        //     "only when you both make a successful set, and when your selection is\n" +
+        //     "not predicted by the adversary. When ready, click the trigger button\n" +
+        //     "to start the next trial.";
+        string message = "You will now move to the next phase. Your experimenter will help you take off the headset.";
+        ui.ShowHUDScreenWithDelayedConfirm(message, Color.black, "RunOneTrial");
     }
 
     void RunOneTrial() {
@@ -312,7 +313,7 @@ public class ExperimentRunner : MonoBehaviour
     void Finish() {
         Debug.Log("Done, saving...");
         session.SaveToFile();
-        if (record) StopRecording();
+        if (this.recording) this.recording = false;
         MaybeClearHand();
         string results = "All trials finished!\n\n";
         results += string.Format("You were successful in {0} of {1} trials.\n\nYour experimenter will help you take off the VR headset.", this.session.data.total_points, this.session.data.total_points_possible);

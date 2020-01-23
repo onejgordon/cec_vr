@@ -137,8 +137,9 @@ public class ControllerGrab : MonoBehaviour
                 bool left = objectInHand.GetComponent<CardBehavior>().isLeft();
                 if (left) exp.SubjectSelectCardLeft();
                 else exp.SubjectSelectCardRight();
+                this.holder.setHighlight(false);
             } else {
-                // Release with velocity
+                // Not releasable on holder, so release to air with velocity
                 objectInHand.GetComponent<Rigidbody>().velocity = controllerPose.GetVelocity();
                 objectInHand.GetComponent<Rigidbody>().angularVelocity = controllerPose.GetAngularVelocity();
             }

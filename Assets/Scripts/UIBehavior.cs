@@ -74,6 +74,20 @@ public class UIBehavior : MonoBehaviour
         ShowHUDScreen(message, bgcolor);
     }
 
+    public void ShowHUDScreenWithDelayedConfirm(string message, Color bgcolor,  string callback) {
+        // Same as ShowHUDScreenWithConfirm but disallows confirm until X seconds
+        // have passed (e.g. to allow experimenter intervention)
+        invokeOnCallback = callback;
+        waitingForTrigger = false;
+        Invoke("AllowTrigger", 10); // 10 s
+        ShowHUDScreen(message, bgcolor);
+    }
+
+    public void AllowTrigger() {
+        waitingForTrigger = true;
+    }
+
+
     public void DismissConfirmationScreen() {
         HideHUDScreen();
         ExperimentRunner exp = GameObject.Find("Camera").GetComponent<ExperimentRunner>();

@@ -16,6 +16,9 @@ public class MySessionData
     public bool left_handed = false;
     public int total_points = 0;
     public int total_points_possible = 0;
+    public double ts_session_start = 0;
+    public double ts_adversary = 0;
+    public double ts_session_end = 0;
 
     public int CountTrials() {
         return this.trials.Count;

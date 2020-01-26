@@ -34,7 +34,7 @@ public class UIBehavior : MonoBehaviour
         if (countdown_secs > 0) {
             int seconds_left = (int) (countdown_secs - Time.time);
             if (seconds_left < 0) countdown_secs = 0;
-            string message = countdown_message + " - " + seconds_left.ToString();
+            string message = countdown_message + " " + seconds_left.ToString();
             ShowHUDMessage(message);
         }
 
@@ -86,7 +86,6 @@ public class UIBehavior : MonoBehaviour
     public void AllowTrigger() {
         waitingForTrigger = true;
     }
-
 
     public void DismissConfirmationScreen() {
         HideHUDScreen();

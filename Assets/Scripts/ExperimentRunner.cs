@@ -15,9 +15,9 @@ public class ExperimentRunner : MonoBehaviour
     private int N_TRIALS = 5;
     public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
     private int DECISION_SECS = 10;
-    private int PICKUP_SECS = 4; // -1 for infinite time (wait for user choice)
+    private int PICKUP_SECS = 5; // -1 for infinite time (wait for user choice)
     private int ADVERSARY_ROUNDS_IMMEDIATE = 3; // 3, ~ 1 minute
-    private int ADVERSARY_ROUNDS_DELAYED = 5; // 15, ~ 5 minutes 
+    private int ADVERSARY_ROUNDS_DELAYED = 10; // 15, ~ 5 minutes 
 
     public int EXP_MAX_MINS = 25;
     public bool left_handed = false;
@@ -46,6 +46,7 @@ public class ExperimentRunner : MonoBehaviour
     private string session_id;
     private Transform hmdCamera;
     private Transform controller;
+    private ControllerGrab controller_grab;
 
     private Color DGREEN = new Color(0.0f, 0.0f, 0.6f);
 
@@ -59,6 +60,7 @@ public class ExperimentRunner : MonoBehaviour
         this.ui = GameObject.Find("UICanvas").GetComponent<UIBehavior>();
         this.hmdCamera = GameObject.Find("Camera").GetComponent<Transform>();
         this.controller = GameObject.FindGameObjectWithTag("Controller").GetComponent<Transform>();
+        this.controller_grab = this.controller.GetComponent<ControllerGrab>();
         this.hands = new List<HandSpec>();
         string path = "./ExperimentData/hands.json";
         if(File.Exists(path))
@@ -132,6 +134,7 @@ public class ExperimentRunner : MonoBehaviour
             this.recording = true;
         }
         this.ts_exp_start = Util.timestamp();
+        this.session.data.ts_session_start = this.ts_exp_start;
         GotoNextTrial();
     }
 
@@ -149,6 +152,7 @@ public class ExperimentRunner : MonoBehaviour
         if (activate_adversary) {
             this.adversary_active = true;
             show_adversary_info = true;
+            this.session.data.ts_adversary = Util.timestamp();
         }
 
         if (mins > EXP_MAX_MINS || this.trial_index > this.hands.Count + this.practice_hands.Count) Finish();
@@ -193,7 +197,7 @@ public class ExperimentRunner : MonoBehaviour
             int prounds = this.practice_hands.Count;
             ui.ShowHUDScreenWithConfirm(
                 string.Format(
-                    "This is practice round {0} of {1}. Try selecting a card and bringing it to your hand. Your choice on these rounds wont affect your score. Click your controller trigger to proceed.",
+                    "This is practice round {0} of {1}. After the decision phase, try selecting a card and bringing it to your hand. Your choice on these rounds wont affect your score. Click your controller trigger to proceed.",
                     prounds - this.practice_remaining,
                     prounds
                 ),
@@ -211,17 +215,18 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     public void SubjectSelection(int position) {
+        ui.ClearCountdown();
         ui.ShowHUDMessage("Trial complete");
         // Score selection and save trial to session
         this.current_trial.StoreResponseAndScore(position);
         this.current_trial.SaveToFile();
         this.current_trial.CleanUpData(); // Deletes large data once saved
         session.AddTrial(this.current_trial);
-        if (PICKUP_SECS == -1) {
-            // No time limit, waiting for user choice
-            // So, now go to next trial after short delay
-            Invoke("GotoNextTrial", 2);
+        if (PICKUP_SECS != -1) {
+            // Time limit, clear timer to avoid double GoTo
+            CancelInvoke();
         }
+        Invoke("GotoNextTrial", 2);
     }
 
     public void SubjectSelectCardLeft() {
@@ -238,7 +243,7 @@ public class ExperimentRunner : MonoBehaviour
 
     void BeginDecisionStage() {
         GetComponent<Camera>().backgroundColor = this.current_trial.adversarial() ? SKY_ADVERSARY : SKY_DEFAULT;
-        ui.ShowHUDCountdownMessage(DECISION_SECS, "Decision... ");
+        ui.ShowHUDCountdownMessage(DECISION_SECS, "Decision (don't pick up yet)... ");
         // Show decision prompt
         Invoke("BeginPickupStage", DECISION_SECS);
     }
@@ -299,6 +304,7 @@ public class ExperimentRunner : MonoBehaviour
             newCard.GetComponent<CardBehavior>().setPosition(i);
         }
         session.data.hand_specs.Add(hs);
+        this.controller_grab.reset();
     }
 
     private Transform AddCardToScene(string id, float x, float y, float z) {
@@ -312,6 +318,7 @@ public class ExperimentRunner : MonoBehaviour
 
     void Finish() {
         Debug.Log("Done, saving...");
+        session.data.ts_session_end = Util.timestamp();
         session.SaveToFile();
         if (this.recording) this.recording = false;
         MaybeClearHand();

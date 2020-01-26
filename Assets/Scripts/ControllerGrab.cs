@@ -60,6 +60,11 @@ public class ControllerGrab : MonoBehaviour
 
     }
 
+    public void reset() {
+        // Reset dynamics state
+        this.objectInHand = null;
+    }
+
     public void EnteredHandZone(bool in_zone) {
         inHandZone = in_zone;
     }
@@ -140,6 +145,7 @@ public class ControllerGrab : MonoBehaviour
                 this.holder.setHighlight(false);
             } else {
                 // Not releasable on holder, so release to air with velocity
+                Debug.Log("Releasing into air");
                 objectInHand.GetComponent<Rigidbody>().velocity = controllerPose.GetVelocity();
                 objectInHand.GetComponent<Rigidbody>().angularVelocity = controllerPose.GetAngularVelocity();
             }

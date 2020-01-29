@@ -13,7 +13,6 @@ public class ExperimentRunner : MonoBehaviour
     private Color SKY_DEFAULT = new Color(150, 150, 150);
     public bool VISUAL_ADVERSARY_INFO = true;
     public bool QUICK_DEBUG = true;
-    private int N_TRIALS = 5;
     public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
     private int DECISION_SECS = 10;
     private int PICKUP_SECS = 5; // -1 for infinite time (wait for user choice)
@@ -56,6 +55,7 @@ public class ExperimentRunner : MonoBehaviour
     void Start()
     {
         if (QUICK_DEBUG) {
+            DECISION_SECS = 5;
             practice_rounds = 1;
             ADVERSARY_ROUNDS_IMMEDIATE = 1;
             ADVERSARY_ROUNDS_DELAYED = 3;
@@ -81,7 +81,6 @@ public class ExperimentRunner : MonoBehaviour
             this.practice_hands = ahs.practice_hands;
             if (this.practice_hands.Count > 0) this.practicing = true;
             this.RandomizeTrialOrder();
-            N_TRIALS = this.hands.Count;
             Debug.Log(string.Format("Loaded {0} hands from {1}", this.hands.Count, path));
         } else Debug.Log(string.Format("{0} doesn't exist", path));
         TobiiXR.Start();
@@ -154,7 +153,6 @@ public class ExperimentRunner : MonoBehaviour
         double mins = this.minutes_in();
         if (!this.adversary_active) {
             // Check to see if we should activate adversary
-            // Logic: EITHER X minutes passed OR Y rounds done
             int real_rounds_in = this.trial_index - this.practice_rounds - 1;
             activate_adversary = real_rounds_in == this.non_adversary_rounds();
         }
@@ -173,7 +171,7 @@ public class ExperimentRunner : MonoBehaviour
 
     void ShowAdversaryInfoThenTrial() {
         if (VISUAL_ADVERSARY_INFO) {
-            ui.ShowHUDImageWithConfirm("Images/adversary", "RunOneTrial");
+            ui.ShowHUDImageWithDelayedConfirm("Images/adversary", "RunOneTrial");
         } else {
             // string message = "In all following trials, an adversary\n" +
             //     "will be tracking your behavior as you decide, and will attempt to predict\n" +
@@ -287,7 +285,7 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void MaybeClearHand() {
-        this.controller_grab.reset();
+        this.controller_grab.ResetState();
         for (int i=0; i<this.cards.Count; i++) {
             Destroy(this.cards[i].gameObject);
         }
@@ -360,6 +358,7 @@ public class ExperimentRunner : MonoBehaviour
             dollars
             );
         ui.ShowHUDScreen(results, DGREEN);
+        Debug.Log(">>>>>> Subject Bonus: $" + dollars.ToString());
     }
 
 }

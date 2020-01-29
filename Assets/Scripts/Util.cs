@@ -22,8 +22,8 @@ using UnityEngine;
      target.GetComponent<SpriteRenderer>().sprite = s;
    }
 
-  public static void SetImage(Image target, string image_name) {
-     Sprite s = Resources.Load<Sprite>(image_name);
-     target.sprite = s;
-   }
+  // public static void SetImage(Image target, string image_name) {
+  //    Sprite s = Resources.Load<Sprite>(image_name);
+  //    target.GetComponent<Image>().sprite = s;
+  //  }
  }

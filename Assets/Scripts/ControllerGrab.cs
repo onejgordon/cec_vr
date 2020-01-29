@@ -29,6 +29,7 @@ public class ControllerGrab : MonoBehaviour
             // Do nothing if already colliding with something
             return;
         }
+        Debug.Log("Setting colliding to " + col.gameObject.ToString());
         collidingObject = col.gameObject;
     }
 
@@ -58,7 +59,7 @@ public class ControllerGrab : MonoBehaviour
 
     }
 
-    public void reset() {
+    public void ResetState() {
         Debug.Log("Resetting controller dynamics...");
         // Reset dynamics state
         if (this.objectInHand != null) this.objectInHand.tag = "NotGrabbable"; // Prevent immediate re-grab
@@ -66,9 +67,10 @@ public class ControllerGrab : MonoBehaviour
         this.collidingObject = null;
         this.holder.setHighlight(false);
         // Delete fixedjoint if present
-        FixedJoint fj = GetComponent<FixedJoint>();
-        if (fj)
+        FixedJoint fj = gameObject.GetComponent<FixedJoint>();
+        if (fj != null)
         {
+            Debug.Log("Destroying fj");
             fj.connectedBody = null;
             Destroy(fj);
         }

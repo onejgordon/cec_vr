@@ -12,6 +12,7 @@ public class UIBehavior : MonoBehaviour
     public GameObject statusHUD;
     public GameObject screenText;
     public GameObject screenBG; // Panel
+    public GameObject uiImage; // Image
     public GameObject room;
     private float countdown_secs = 0;
     private string countdown_message = null;
@@ -75,19 +76,20 @@ public class UIBehavior : MonoBehaviour
     }
 
     public void ShowHUDImage(string image_path) {
-        Image img = this.screenBG.GetComponent<Image>();
-        img.color = Color.black;
+        this.screenBG.GetComponent<Image>().color = Color.black;
         this.screenBG.SetActive(true);
-        Util.SetImage(img, image_path);
-        this.screenText.GetComponent<Text>().text = "";
-        this.screenText.SetActive(true);
+        this.uiImage.SetActive(true);
+        Util.SetImage(this.uiImage, image_path);
+        this.screenText.SetActive(false);
         this.room.SetActive(false);
         this.statusHUD.SetActive(false);
     }
 
-    public void ShowHUDImageWithConfirm(string image_path, string callback) {
+    public void ShowHUDImageWithDelayedConfirm(string image_path, string callback) {
         invokeOnCallback = callback;
         waitingForTrigger = true;
+        waitingForTrigger = false;
+        Invoke("AllowTrigger", 10); // 10 s
         ShowHUDImage(image_path);
     }
 
@@ -113,7 +115,7 @@ public class UIBehavior : MonoBehaviour
     }
 
     public void HideHUDScreen() {
-        this.screenBG.GetComponent<Image>().sprite = null; // In case image showing
+        this.uiImage.SetActive(false);
         this.screenBG.SetActive(false);
         this.screenText.SetActive(false);
         this.room.SetActive(true);

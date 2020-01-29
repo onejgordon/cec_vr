@@ -13,6 +13,7 @@ public class ControllerGrab : MonoBehaviour
     private ExperimentRunner exp;
     private HolderBehavior holder;
     private bool inHandZone = false;
+    private FixedJoint joint;
 
 
     private bool cardPlaceable() {
@@ -67,12 +68,11 @@ public class ControllerGrab : MonoBehaviour
         this.collidingObject = null;
         this.holder.setHighlight(false);
         // Delete fixedjoint if present
-        FixedJoint fj = gameObject.GetComponent<FixedJoint>();
-        if (fj != null)
+        if (this.joint != null)
         {
-            Debug.Log("Destroying fj");
-            fj.connectedBody = null;
-            Destroy(fj);
+            Debug.Log("Destroying joint");
+            this.joint.connectedBody = null;
+            Destroy(this.joint);
         }
     }
 
@@ -116,7 +116,7 @@ public class ControllerGrab : MonoBehaviour
             Debug.Log("Grab " + collidingObject.ToString());
             objectInHand = collidingObject;
             collidingObject = null;
-            AddFixedJoint(objectInHand);
+            this.joint = AddFixedJoint(objectInHand);
         } else {
             Debug.Log("Tried to grab ungrabbable object");
         }
@@ -134,11 +134,11 @@ public class ControllerGrab : MonoBehaviour
 
     private void ReleaseObject()
     {
-        if (GetComponent<FixedJoint>())
+        if (this.joint != null)
         {
             Debug.Log("Release card");
-            GetComponent<FixedJoint>().connectedBody = null;
-            Destroy(GetComponent<FixedJoint>());
+            this.joint.connectedBody = null;
+            Destroy(this.joint);
 
             if (this.cardPlaceable()) {
                 Debug.Log("RO 2");

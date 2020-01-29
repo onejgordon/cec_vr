@@ -41,10 +41,10 @@ public class Record {
     public float gaze_dir_x;
     public float gaze_dir_y;
     public float gaze_dir_z;
-
+    public bool blinking;
     public double ts;
 
-    public Record(Quaternion hmd_rot, Quaternion ctr_rot, Vector3 gaze_origin, Vector3 gaze_direction) {
+    public Record(Quaternion hmd_rot, Quaternion ctr_rot, Vector3 gaze_origin, Vector3 gaze_direction, bool blinking) {
         this.ts = Util.timestamp();
         float hmd_x = hmd_rot.x;
         float hmd_y = hmd_rot.y;
@@ -76,7 +76,7 @@ public class Record {
             this.gaze_dir_y = gaze_direction.y;
             this.gaze_dir_z = gaze_direction.z;
         }
-        
+        this.blinking = blinking;
     }
 }
 

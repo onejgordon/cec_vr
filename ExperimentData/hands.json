@@ -29,7 +29,142 @@
 			"priv": ["3d", "2o"],
 			"table": ["1s", "3s"],
 			"correct": [1, 0]
-		}
+		},
+		{
+			"priv": ["2s", "2o"],
+			"table": ["3d", "2d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["3d", "1s"],
+			"table": ["1d", "2o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1o", "2o"],
+			"table": ["2s", "3o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["2d", "2o"],
+			"table": ["2s", "2d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2s", "1o"],
+			"table": ["1d", "3d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["2s", "2s"],
+			"table": ["2s", "2o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2d", "1d"],
+			"table": ["3d", "3o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["3o", "3s"],
+			"table": ["1s", "3d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1s", "3s"],
+			"table": ["2s", "2o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2o", "3d"],
+			"table": ["1d", "1s"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["2s", "1s"],
+			"table": ["3o", "3s"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1d", "1o"],
+			"table": ["1s", "1o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["3d", "1s"],
+			"table": ["2o", "1d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2d", "2s"],
+			"table": ["3o", "2o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1d", "3d"],
+			"table": ["3s", "2d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["2o", "1d"],
+			"table": ["3s", "3d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["1d", "2d"],
+			"table": ["3o", "3d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["3o", "2s"],
+			"table": ["1o", "1d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1o", "2d"],
+			"table": ["3s", "2s"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["1s", "3d"],
+			"table": ["3o", "2o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["3o", "3d"],
+			"table": ["2d", "3s"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["2s", "1d"],
+			"table": ["3o", "1o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2d", "2s"],
+			"table": ["2s", "2o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1d", "3s"],
+			"table": ["2o", "3d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["3o", "2o"],
+			"table": ["1o", "1d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["1d", "3d"],
+			"table": ["1s", "2d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1s", "1d"],
+			"table": ["1s", "1o"],
+			"correct": [0, 1]
+		}		
 	],
 	"practice_hands": [
 		{
@@ -41,6 +176,16 @@
 			"priv": ["3d", "1o"],
 			"table": ["2s", "1s"],
 			"correct": [1, 0]
-		}
+		},
+		{
+			"priv": ["1o", "3s"],
+			"table": ["2s", "2d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1o", "1s"],
+			"table": ["1d", "1s"],
+			"correct": [1, 0]
+		}				
 	]
 }

@@ -11,7 +11,8 @@ public class UIBehavior : MonoBehaviour
     public Canvas UIcanvas;
     public GameObject statusHUD;
     public GameObject screenText;
-    public GameObject screenBG;
+    public GameObject screenBG; // Panel
+    public GameObject uiImage; // Image
     public GameObject room;
     private float countdown_secs = 0;
     private string countdown_message = null;
@@ -32,9 +33,9 @@ public class UIBehavior : MonoBehaviour
     void Update()
     {
         if (countdown_secs > 0) {
-            int seconds_left = (int) (countdown_secs - Time.time);
+            int seconds_left = Mathf.RoundToInt(countdown_secs - Time.time);
             if (seconds_left < 0) countdown_secs = 0;
-            string message = countdown_message + " - " + seconds_left.ToString();
+            string message = countdown_message + " " + seconds_left.ToString();
             ShowHUDMessage(message);
         }
 
@@ -74,6 +75,37 @@ public class UIBehavior : MonoBehaviour
         ShowHUDScreen(message, bgcolor);
     }
 
+    public void ShowHUDImage(string image_path) {
+        this.screenBG.GetComponent<Image>().color = Color.black;
+        this.screenBG.SetActive(true);
+        this.uiImage.SetActive(true);
+        Util.SetImage(this.uiImage, image_path);
+        this.screenText.SetActive(false);
+        this.room.SetActive(false);
+        this.statusHUD.SetActive(false);
+    }
+
+    public void ShowHUDImageWithDelayedConfirm(string image_path, string callback) {
+        invokeOnCallback = callback;
+        waitingForTrigger = true;
+        waitingForTrigger = false;
+        Invoke("AllowTrigger", 10); // 10 s
+        ShowHUDImage(image_path);
+    }
+
+    public void ShowHUDScreenWithDelayedConfirm(string message, Color bgcolor,  string callback) {
+        // Same as ShowHUDScreenWithConfirm but disallows confirm until X seconds
+        // have passed (e.g. to allow experimenter intervention)
+        invokeOnCallback = callback;
+        waitingForTrigger = false;
+        Invoke("AllowTrigger", 10); // 10 s
+        ShowHUDScreen(message, bgcolor);
+    }
+
+    public void AllowTrigger() {
+        waitingForTrigger = true;
+    }
+
     public void DismissConfirmationScreen() {
         HideHUDScreen();
         ExperimentRunner exp = GameObject.Find("Camera").GetComponent<ExperimentRunner>();
@@ -83,6 +115,7 @@ public class UIBehavior : MonoBehaviour
     }
 
     public void HideHUDScreen() {
+        this.uiImage.SetActive(false);
         this.screenBG.SetActive(false);
         this.screenText.SetActive(false);
         this.room.SetActive(true);

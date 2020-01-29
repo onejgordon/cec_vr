@@ -11,20 +11,21 @@ public class ExperimentRunner : MonoBehaviour
 {
     private Color SKY_ADVERSARY = new Color(200, 0, 0);
     private Color SKY_DEFAULT = new Color(150, 150, 150);
-
-    private int N_TRIALS = 5;
+    public bool VISUAL_ADVERSARY_INFO = true;
+    public bool QUICK_DEBUG = true;
     public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
-    public int PICKUP_SECS = 4; // -1 for infinite time (wait for user choice)
-    public int DECISION_SECS = 10;
-    public int ADVERSARY_DELAY_MINS = 10;
-    public int ADVERSARY_FORCE_AFTER_ROUNDS = 2; // Set to -1 to not force (for production)
+    private int DECISION_SECS = 10;
+    private int PICKUP_SECS = 5; // -1 for infinite time (wait for user choice)
+    private int ADVERSARY_ROUNDS_IMMEDIATE = 3; // 3, ~ 1 minute
+    private int ADVERSARY_ROUNDS_DELAYED = 15; // 15, ~ 5 minutes 
+
     public int EXP_MAX_MINS = 25;
     public bool left_handed = false;
     public float CARD_SEP = 0.2f;
     private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
     public int practice_rounds = 2;
-    private int practice_remaining = 0; // 0 to disable practice
+    private int practice_remaining = 0; 
     private SessionTrial current_trial;
     public Transform card;
     public SessionSaver session;
@@ -45,19 +46,31 @@ public class ExperimentRunner : MonoBehaviour
     private string session_id;
     private Transform hmdCamera;
     private Transform controller;
+    private ControllerGrab controller_grab;
 
-    private Color DGREEN = new Color(0.0f, 0.0f, 0.6f);
+    private Color DBLUE = new Color(0.0f, 0.0f, 0.6f);
+    private Color DGREEN = new Color(0, 0.6f, 0, 1);
 
     // Start is called before the first frame update
     void Start()
     {
-        this.session_id = ((int)Util.timestamp()).ToString();
+        if (QUICK_DEBUG) {
+            DECISION_SECS = 5;
+            practice_rounds = 1;
+            ADVERSARY_ROUNDS_IMMEDIATE = 1;
+            ADVERSARY_ROUNDS_DELAYED = 3;
+            MAX_TRIALS = 5;
+            this.session_id = "DEBUG";
+        } else {
+            this.session_id = ((int)Util.timestamp()).ToString();   
+        }
         this.session.data.session_id = this.session_id;
         this.session.data.left_handed = this.left_handed;
         this.practice_remaining = this.practice_rounds;
         this.ui = GameObject.Find("UICanvas").GetComponent<UIBehavior>();
         this.hmdCamera = GameObject.Find("Camera").GetComponent<Transform>();
         this.controller = GameObject.FindGameObjectWithTag("Controller").GetComponent<Transform>();
+        this.controller_grab = this.controller.GetComponent<ControllerGrab>();
         this.hands = new List<HandSpec>();
         string path = "./ExperimentData/hands.json";
         if(File.Exists(path))
@@ -68,9 +81,9 @@ public class ExperimentRunner : MonoBehaviour
             this.practice_hands = ahs.practice_hands;
             if (this.practice_hands.Count > 0) this.practicing = true;
             this.RandomizeTrialOrder();
-            N_TRIALS = this.hands.Count;
             Debug.Log(string.Format("Loaded {0} hands from {1}", this.hands.Count, path));
         } else Debug.Log(string.Format("{0} doesn't exist", path));
+        TobiiXR.Start();
         this.randomize_condition();
         this.BeginExperiment();
     }
@@ -78,24 +91,34 @@ public class ExperimentRunner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (recording) {
+        if (recording && this.current_trial != null) {
             Quaternion hmdRot = hmdCamera.rotation;
             Quaternion ctrlRot = controller.rotation;
             Vector3 gazeOrigin = new Vector3();
             Vector3 gazeDirection = new Vector3();
+            bool eitherEyeClosed = false;
             var eyeTrackingData = TobiiXR.GetEyeTrackingData(TobiiXR_TrackingSpace.World);
             if (eyeTrackingData.GazeRay.IsValid) {
                 gazeOrigin = eyeTrackingData.GazeRay.Origin;
                 gazeDirection = eyeTrackingData.GazeRay.Direction;
             }
-            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection);
+            eitherEyeClosed = eyeTrackingData.IsLeftEyeBlinking || eyeTrackingData.IsRightEyeBlinking;
+            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection, eitherEyeClosed);
             this.current_trial.addRecord(record);
         }
     }
 
+    public void Calibrate() {
+        
+    }
+
+    private int non_adversary_rounds() {
+        if (this.condition == "delayed") return ADVERSARY_ROUNDS_DELAYED;
+        else return ADVERSARY_ROUNDS_IMMEDIATE;
+    }
+
     private void randomize_condition() {
         int c = Random.Range(0, 1);
-        c = 1; // TODO: remove
         if (c == 0) { this.condition = "immediate"; }
         else { this.condition = "delayed"; }
         Debug.Log("Condition: " + this.condition);
@@ -117,42 +140,30 @@ public class ExperimentRunner : MonoBehaviour
 
     public void BeginExperiment() {
         if (record) {
-            StartRecording();
+            this.recording = true;
         }
         this.ts_exp_start = Util.timestamp();
+        this.session.data.ts_session_start = this.ts_exp_start;
         GotoNextTrial();
-    }
-
-    public void StartRecording() {
-        this.recording = true;
-    }
-
-    public void StopRecording() {
-        this.recording = false;
     }
 
     public void GotoNextTrial() {
         this.trial_index += 1;
         bool show_adversary_info = false;
-        bool activate = false;
+        bool activate_adversary = false;
         double mins = this.minutes_in();
         if (!this.adversary_active) {
-            if (this.condition == "delayed") {
-                // Check to see if we should activate adversary (X minutes passed)
-                int real_rounds_in = this.trial_index - this.practice_rounds - 1;
-                bool force_adversary = ADVERSARY_FORCE_AFTER_ROUNDS > -1 && real_rounds_in == ADVERSARY_FORCE_AFTER_ROUNDS;
-                activate = mins > ADVERSARY_DELAY_MINS || force_adversary;
-            } else {
-                // Immediate, activate now
-                activate = true;
-            }
+            // Check to see if we should activate adversary
+            int real_rounds_in = this.trial_index - this.practice_rounds - 1;
+            activate_adversary = real_rounds_in == this.non_adversary_rounds();
         }
-        if (activate) {
+        if (activate_adversary) {
             this.adversary_active = true;
             show_adversary_info = true;
+            this.session.data.ts_adversary = Util.timestamp();
         }
 
-        if (mins > EXP_MAX_MINS || this.trial_index > this.hands.Count + this.practice_hands.Count) Finish();
+        if ((MAX_TRIALS != 0 && this.trial_index > MAX_TRIALS) || mins > EXP_MAX_MINS || this.trial_index > this.hands.Count + this.practice_hands.Count) Finish();
         else {
             if (show_adversary_info) ShowAdversaryInfoThenTrial(); // Calls RunOneTrial
             else RunOneTrial();
@@ -160,13 +171,18 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void ShowAdversaryInfoThenTrial() {
-        string message = "In all following trials, an adversary\n" +
-            "will be tracking your behavior as you decide, and will attempt to predict\n" +
-            "which card you are going to select. On each trial, you will earn a point\n" +
-            "only when you both make a successful set, and when your selection is\n" +
-            "not predicted by the adversary. When ready, click the trigger button\n" +
-            "to start the next trial.";
-        ui.ShowHUDScreenWithConfirm(message, Color.black, "RunOneTrial");
+        if (VISUAL_ADVERSARY_INFO) {
+            ui.ShowHUDImageWithDelayedConfirm("Images/adversary", "RunOneTrial");
+        } else {
+            // string message = "In all following trials, an adversary\n" +
+            //     "will be tracking your behavior as you decide, and will attempt to predict\n" +
+            //     "which card you are going to select. On each trial, you will earn a point\n" +
+            //     "only when you both make a successful set, and when your selection is\n" +
+            //     "not predicted by the adversary. When ready, click the trigger button\n" +
+            //     "to start the next trial.";
+            string message = "You will now move to the next phase. Your experimenter will help you take off the headset.";
+            ui.ShowHUDScreenWithDelayedConfirm(message, Color.black, "RunOneTrial");
+        }
     }
 
     void RunOneTrial() {
@@ -193,7 +209,7 @@ public class ExperimentRunner : MonoBehaviour
             int prounds = this.practice_hands.Count;
             ui.ShowHUDScreenWithConfirm(
                 string.Format(
-                    "This is practice round {0} of {1}. Try selecting a card and bringing it to your hand. Your choice on these rounds wont affect your score. Click your controller trigger to proceed.",
+                    "This is practice round {0} of {1}. After the decision phase, try selecting a card and bringing it to your hand. Your choice on these rounds wont affect your score. Click your controller trigger to proceed.",
                     prounds - this.practice_remaining,
                     prounds
                 ),
@@ -202,7 +218,7 @@ public class ExperimentRunner : MonoBehaviour
             if (first_real) {
                 // Show message indicating we're starting real trials
                 ui.ShowHUDScreenWithConfirm("Great job. Practice rounds finished. All remaining trials are real and will be scored. Click your controller trigger to proceed.",
-                DGREEN, "BeginDecisionStage");
+                DBLUE, "BeginDecisionStage");
             } else {
                 // Immediately start decision stage / timer
                 BeginDecisionStage();
@@ -210,17 +226,28 @@ public class ExperimentRunner : MonoBehaviour
         }
     }
 
-    public void SubjectSelection(int position) {
-        ui.ShowHUDMessage("Trial complete");
+    public void FinishTrial() {
         // Score selection and save trial to session
-        this.current_trial.StoreResponseAndScore(position);
+        ui.ClearCountdown();
+        ui.ShowHUDMessage("Trial complete");
+        
         this.current_trial.SaveToFile();
         this.current_trial.CleanUpData(); // Deletes large data once saved
         session.AddTrial(this.current_trial);
-        if (PICKUP_SECS == -1) {
-            // No time limit, waiting for user choice
-            // So, now go to next trial after short delay
-            Invoke("GotoNextTrial", 2);
+        this.current_trial = null;
+        if (PICKUP_SECS != -1) {
+            // Time limit, clear timer to avoid double GoTo
+            CancelInvoke();
+        }
+        Invoke("GotoNextTrial", 2);
+    }
+
+    public void SubjectSelection(int position) {
+        if (this.current_trial != null) {
+            this.current_trial.StoreResponseAndScore(position);
+            this.FinishTrial();
+        } else {
+            // Trial already finished, waiting for GotoNextTrial
         }
     }
 
@@ -238,21 +265,20 @@ public class ExperimentRunner : MonoBehaviour
 
     void BeginDecisionStage() {
         GetComponent<Camera>().backgroundColor = this.current_trial.adversarial() ? SKY_ADVERSARY : SKY_DEFAULT;
-        ui.ShowHUDCountdownMessage(DECISION_SECS, "Decision... ");
+        ui.ShowHUDCountdownMessage(DECISION_SECS, "Decision (don't pick up yet)... ");
         // Show decision prompt
         Invoke("BeginPickupStage", DECISION_SECS);
     }
 
     void BeginPickupStage() {
         // Await user choice
-        // Possibly update "adversary watching" indicator
         this.current_trial.StartSelection();
         GameObject.Find("CardOnTable0").tag = "Grabbable";
         GameObject.Find("CardOnTable1").tag = "Grabbable";
         ui.ClearCountdown();
         GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
         if (PICKUP_SECS > -1) {
-            Invoke("GotoNextTrial", PICKUP_SECS);
+            Invoke("FinishTrial", PICKUP_SECS);
             ui.ShowHUDCountdownMessage(PICKUP_SECS, "Pick up card");
         } else {
             ui.ShowHUDMessage("Pick up card");
@@ -260,6 +286,7 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void MaybeClearHand() {
+        this.controller_grab.ResetState();
         for (int i=0; i<this.cards.Count; i++) {
             Destroy(this.cards[i].gameObject);
         }
@@ -312,12 +339,27 @@ public class ExperimentRunner : MonoBehaviour
 
     void Finish() {
         Debug.Log("Done, saving...");
+        session.data.ts_session_end = Util.timestamp();
         session.SaveToFile();
-        if (record) StopRecording();
+        if (this.recording) this.recording = false;
         MaybeClearHand();
         string results = "All trials finished!\n\n";
-        results += string.Format("You were successful in {0} of {1} trials.\n\nYour experimenter will help you take off the VR headset.", this.session.data.total_points, this.session.data.total_points_possible);
-        ui.ShowHUDScreen(results, Color.green);
+        double percent = this.session.data.total_points / this.session.data.total_points_possible;
+        int dollars = 0;
+        if (percent >= .25 && percent < .4) dollars = 1;
+        else if (percent >= .4 && percent < .55) dollars = 2;
+        else if (percent >= .55 && percent < .70) dollars = 3;
+        else if (percent >= .7 && percent < .85) dollars = 4;
+        else if (percent >= .85) dollars = 5;
+        results += string.Format("You correctly matched in {0} of {1} trials.\n Of those, you avoided prediction {2} times.\nYour final success rate is {3:0.0}% (${4} bonus).\n\nYour experimenter will help you take off the VR headset.", 
+            this.session.data.total_matches,
+            this.session.data.total_points_possible, 
+            this.session.data.total_points,
+            100.0 * percent,
+            dollars
+            );
+        ui.ShowHUDScreen(results, DGREEN);
+        Debug.Log(">>>>>> Subject Bonus: $" + dollars.ToString());
     }
 
 }

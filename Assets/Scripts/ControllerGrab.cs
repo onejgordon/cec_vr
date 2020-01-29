@@ -8,14 +8,14 @@ public class ControllerGrab : MonoBehaviour
     public SteamVR_Input_Sources handType;
     public SteamVR_Behaviour_Pose controllerPose;
     public SteamVR_Action_Boolean grabAction;
-    private GameObject collidingObject; // 1
-    private GameObject objectInHand; // 2
+    private GameObject collidingObject;
+    private GameObject objectInHand;
     private ExperimentRunner exp;
     private HolderBehavior holder;
     private bool inHandZone = false;
 
 
-    private bool cardReleasable() {
+    private bool cardPlaceable() {
         return (objectInHand && inHandZone);
     }
 
@@ -29,6 +29,7 @@ public class ControllerGrab : MonoBehaviour
             // Do nothing if already colliding with something
             return;
         }
+        Debug.Log("Setting colliding to " + col.gameObject.ToString());
         collidingObject = col.gameObject;
     }
 
@@ -40,7 +41,6 @@ public class ControllerGrab : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // 1
         if (grabAction.GetLastStateDown(handType))
         {
             if (collidingObject)
@@ -49,7 +49,6 @@ public class ControllerGrab : MonoBehaviour
             }
         }
 
-        // 2
         if (grabAction.GetLastStateUp(handType))
         {
             if (objectInHand)
@@ -60,6 +59,23 @@ public class ControllerGrab : MonoBehaviour
 
     }
 
+    public void ResetState() {
+        Debug.Log("Resetting controller dynamics...");
+        // Reset dynamics state
+        if (this.objectInHand != null) this.objectInHand.tag = "NotGrabbable"; // Prevent immediate re-grab
+        this.objectInHand = null;
+        this.collidingObject = null;
+        this.holder.setHighlight(false);
+        // Delete fixedjoint if present
+        FixedJoint fj = gameObject.GetComponent<FixedJoint>();
+        if (fj != null)
+        {
+            Debug.Log("Destroying fj");
+            fj.connectedBody = null;
+            Destroy(fj);
+        }
+    }
+
     public void EnteredHandZone(bool in_zone) {
         inHandZone = in_zone;
     }
@@ -68,7 +84,7 @@ public class ControllerGrab : MonoBehaviour
     {
         if (other.gameObject.name == "HandHolder") EnteredHandZone(true);
         SetCollidingObject(other);
-        if (this.cardReleasable()) {
+        if (this.cardPlaceable()) {
             // Colliding with holder while holding card, provide feedback
             this.Vibrate();
             this.holder.setHighlight(true);
@@ -101,7 +117,6 @@ public class ControllerGrab : MonoBehaviour
             objectInHand = collidingObject;
             collidingObject = null;
             AddFixedJoint(objectInHand);
-            
         } else {
             Debug.Log("Tried to grab ungrabbable object");
         }
@@ -124,9 +139,9 @@ public class ControllerGrab : MonoBehaviour
             Debug.Log("Release card");
             GetComponent<FixedJoint>().connectedBody = null;
             Destroy(GetComponent<FixedJoint>());
-            
 
-            if (this.cardReleasable()) {
+            if (this.cardPlaceable()) {
+                Debug.Log("RO 2");
                 // Releasing card into hand
                 // Snap to holder position
                 GameObject placeholder = GameObject.Find("Placeholder");
@@ -137,8 +152,10 @@ public class ControllerGrab : MonoBehaviour
                 bool left = objectInHand.GetComponent<CardBehavior>().isLeft();
                 if (left) exp.SubjectSelectCardLeft();
                 else exp.SubjectSelectCardRight();
+                this.holder.setHighlight(false);
             } else {
-                // Release with velocity
+                // Not releasable on holder, so release to air with velocity
+                Debug.Log("Releasing into air");
                 objectInHand.GetComponent<Rigidbody>().velocity = controllerPose.GetVelocity();
                 objectInHand.GetComponent<Rigidbody>().angularVelocity = controllerPose.GetAngularVelocity();
             }

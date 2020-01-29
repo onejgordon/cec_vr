@@ -134,7 +134,37 @@
 			"priv": ["3o", "3d"],
 			"table": ["2d", "3s"],
 			"correct": [0, 1]
-		}				
+		},
+		{
+			"priv": ["2s", "1d"],
+			"table": ["3o", "1o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2d", "2s"],
+			"table": ["2s", "2o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1d", "3s"],
+			"table": ["2o", "3d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["3o", "2o"],
+			"table": ["1o", "1d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["1d", "3d"],
+			"table": ["1s", "2d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1s", "1d"],
+			"table": ["1s", "1o"],
+			"correct": [0, 1]
+		}		
 	],
 	"practice_hands": [
 		{

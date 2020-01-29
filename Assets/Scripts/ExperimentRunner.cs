@@ -11,13 +11,14 @@ public class ExperimentRunner : MonoBehaviour
 {
     private Color SKY_ADVERSARY = new Color(200, 0, 0);
     private Color SKY_DEFAULT = new Color(150, 150, 150);
-
+    public bool VISUAL_ADVERSARY_INFO = true;
+    public bool QUICK_DEBUG = true;
     private int N_TRIALS = 5;
     public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
     private int DECISION_SECS = 10;
     private int PICKUP_SECS = 5; // -1 for infinite time (wait for user choice)
     private int ADVERSARY_ROUNDS_IMMEDIATE = 3; // 3, ~ 1 minute
-    private int ADVERSARY_ROUNDS_DELAYED = 10; // 15, ~ 5 minutes 
+    private int ADVERSARY_ROUNDS_DELAYED = 15; // 15, ~ 5 minutes 
 
     public int EXP_MAX_MINS = 25;
     public bool left_handed = false;
@@ -25,7 +26,7 @@ public class ExperimentRunner : MonoBehaviour
     private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
     public int practice_rounds = 2;
-    private int practice_remaining = 0; // 0 to disable practice
+    private int practice_remaining = 0; 
     private SessionTrial current_trial;
     public Transform card;
     public SessionSaver session;
@@ -48,12 +49,21 @@ public class ExperimentRunner : MonoBehaviour
     private Transform controller;
     private ControllerGrab controller_grab;
 
-    private Color DGREEN = new Color(0.0f, 0.0f, 0.6f);
+    private Color DBLUE = new Color(0.0f, 0.0f, 0.6f);
+    private Color DGREEN = new Color(0, 0.6f, 0, 1);
 
     // Start is called before the first frame update
     void Start()
     {
-        this.session_id = ((int)Util.timestamp()).ToString();
+        if (QUICK_DEBUG) {
+            practice_rounds = 1;
+            ADVERSARY_ROUNDS_IMMEDIATE = 1;
+            ADVERSARY_ROUNDS_DELAYED = 3;
+            MAX_TRIALS = 5;
+            this.session_id = "DEBUG";
+        } else {
+            this.session_id = ((int)Util.timestamp()).ToString();   
+        }
         this.session.data.session_id = this.session_id;
         this.session.data.left_handed = this.left_handed;
         this.practice_remaining = this.practice_rounds;
@@ -82,7 +92,7 @@ public class ExperimentRunner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (recording) {
+        if (recording && this.current_trial != null) {
             Quaternion hmdRot = hmdCamera.rotation;
             Quaternion ctrlRot = controller.rotation;
             Vector3 gazeOrigin = new Vector3();
@@ -110,7 +120,6 @@ public class ExperimentRunner : MonoBehaviour
 
     private void randomize_condition() {
         int c = Random.Range(0, 1);
-        c = 1; // TODO: remove
         if (c == 0) { this.condition = "immediate"; }
         else { this.condition = "delayed"; }
         Debug.Log("Condition: " + this.condition);
@@ -146,7 +155,7 @@ public class ExperimentRunner : MonoBehaviour
         if (!this.adversary_active) {
             // Check to see if we should activate adversary
             // Logic: EITHER X minutes passed OR Y rounds done
-            int real_rounds_in = this.trial_index - this.practice_rounds;
+            int real_rounds_in = this.trial_index - this.practice_rounds - 1;
             activate_adversary = real_rounds_in == this.non_adversary_rounds();
         }
         if (activate_adversary) {
@@ -155,7 +164,7 @@ public class ExperimentRunner : MonoBehaviour
             this.session.data.ts_adversary = Util.timestamp();
         }
 
-        if (mins > EXP_MAX_MINS || this.trial_index > this.hands.Count + this.practice_hands.Count) Finish();
+        if ((MAX_TRIALS != 0 && this.trial_index > MAX_TRIALS) || mins > EXP_MAX_MINS || this.trial_index > this.hands.Count + this.practice_hands.Count) Finish();
         else {
             if (show_adversary_info) ShowAdversaryInfoThenTrial(); // Calls RunOneTrial
             else RunOneTrial();
@@ -163,14 +172,18 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void ShowAdversaryInfoThenTrial() {
-        // string message = "In all following trials, an adversary\n" +
-        //     "will be tracking your behavior as you decide, and will attempt to predict\n" +
-        //     "which card you are going to select. On each trial, you will earn a point\n" +
-        //     "only when you both make a successful set, and when your selection is\n" +
-        //     "not predicted by the adversary. When ready, click the trigger button\n" +
-        //     "to start the next trial.";
-        string message = "You will now move to the next phase. Your experimenter will help you take off the headset.";
-        ui.ShowHUDScreenWithDelayedConfirm(message, Color.black, "RunOneTrial");
+        if (VISUAL_ADVERSARY_INFO) {
+            ui.ShowHUDImageWithConfirm("Images/adversary", "RunOneTrial");
+        } else {
+            // string message = "In all following trials, an adversary\n" +
+            //     "will be tracking your behavior as you decide, and will attempt to predict\n" +
+            //     "which card you are going to select. On each trial, you will earn a point\n" +
+            //     "only when you both make a successful set, and when your selection is\n" +
+            //     "not predicted by the adversary. When ready, click the trigger button\n" +
+            //     "to start the next trial.";
+            string message = "You will now move to the next phase. Your experimenter will help you take off the headset.";
+            ui.ShowHUDScreenWithDelayedConfirm(message, Color.black, "RunOneTrial");
+        }
     }
 
     void RunOneTrial() {
@@ -206,7 +219,7 @@ public class ExperimentRunner : MonoBehaviour
             if (first_real) {
                 // Show message indicating we're starting real trials
                 ui.ShowHUDScreenWithConfirm("Great job. Practice rounds finished. All remaining trials are real and will be scored. Click your controller trigger to proceed.",
-                DGREEN, "BeginDecisionStage");
+                DBLUE, "BeginDecisionStage");
             } else {
                 // Immediately start decision stage / timer
                 BeginDecisionStage();
@@ -214,19 +227,29 @@ public class ExperimentRunner : MonoBehaviour
         }
     }
 
-    public void SubjectSelection(int position) {
+    public void FinishTrial() {
+        // Score selection and save trial to session
         ui.ClearCountdown();
         ui.ShowHUDMessage("Trial complete");
-        // Score selection and save trial to session
-        this.current_trial.StoreResponseAndScore(position);
+        
         this.current_trial.SaveToFile();
         this.current_trial.CleanUpData(); // Deletes large data once saved
         session.AddTrial(this.current_trial);
+        this.current_trial = null;
         if (PICKUP_SECS != -1) {
             // Time limit, clear timer to avoid double GoTo
             CancelInvoke();
         }
         Invoke("GotoNextTrial", 2);
+    }
+
+    public void SubjectSelection(int position) {
+        if (this.current_trial != null) {
+            this.current_trial.StoreResponseAndScore(position);
+            this.FinishTrial();
+        } else {
+            // Trial already finished, waiting for GotoNextTrial
+        }
     }
 
     public void SubjectSelectCardLeft() {
@@ -250,14 +273,13 @@ public class ExperimentRunner : MonoBehaviour
 
     void BeginPickupStage() {
         // Await user choice
-        // Possibly update "adversary watching" indicator
         this.current_trial.StartSelection();
         GameObject.Find("CardOnTable0").tag = "Grabbable";
         GameObject.Find("CardOnTable1").tag = "Grabbable";
         ui.ClearCountdown();
         GetComponent<Camera>().backgroundColor = SKY_DEFAULT;
         if (PICKUP_SECS > -1) {
-            Invoke("GotoNextTrial", PICKUP_SECS);
+            Invoke("FinishTrial", PICKUP_SECS);
             ui.ShowHUDCountdownMessage(PICKUP_SECS, "Pick up card");
         } else {
             ui.ShowHUDMessage("Pick up card");
@@ -265,6 +287,7 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     void MaybeClearHand() {
+        this.controller_grab.reset();
         for (int i=0; i<this.cards.Count; i++) {
             Destroy(this.cards[i].gameObject);
         }
@@ -304,7 +327,6 @@ public class ExperimentRunner : MonoBehaviour
             newCard.GetComponent<CardBehavior>().setPosition(i);
         }
         session.data.hand_specs.Add(hs);
-        this.controller_grab.reset();
     }
 
     private Transform AddCardToScene(string id, float x, float y, float z) {
@@ -323,8 +345,21 @@ public class ExperimentRunner : MonoBehaviour
         if (this.recording) this.recording = false;
         MaybeClearHand();
         string results = "All trials finished!\n\n";
-        results += string.Format("You were successful in {0} of {1} trials.\n\nYour experimenter will help you take off the VR headset.", this.session.data.total_points, this.session.data.total_points_possible);
-        ui.ShowHUDScreen(results, Color.green);
+        double percent = this.session.data.total_points / this.session.data.total_points_possible;
+        int dollars = 0;
+        if (percent >= .25 && percent < .4) dollars = 1;
+        else if (percent >= .4 && percent < .55) dollars = 2;
+        else if (percent >= .55 && percent < .70) dollars = 3;
+        else if (percent >= .7 && percent < .85) dollars = 4;
+        else if (percent >= .85) dollars = 5;
+        results += string.Format("You correctly matched in {0} of {1} trials.\n Of those, you avoided prediction {2} times.\nYour final success rate is {3:0.0}% (${4} bonus).\n\nYour experimenter will help you take off the VR headset.", 
+            this.session.data.total_matches,
+            this.session.data.total_points_possible, 
+            this.session.data.total_points,
+            100.0 * percent,
+            dollars
+            );
+        ui.ShowHUDScreen(results, DGREEN);
     }
 
 }

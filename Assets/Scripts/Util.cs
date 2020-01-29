@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 using UnityEngine;
 
  public static class Util
@@ -12,8 +13,17 @@ using UnityEngine;
    }
 
    public static void AddCardPattern(Transform card, string pattern) {
-      Sprite face_sprite = Resources.Load<Sprite>("Images/" + pattern);
       Transform face = card.GetChild(0);
-		  face.GetComponent<SpriteRenderer>().sprite = face_sprite;
+      SetImage(face.gameObject, "Images/" + pattern);
+   }
+
+   public static void SetImage(GameObject target, string image_name) {
+     Sprite s = Resources.Load<Sprite>(image_name);
+     target.GetComponent<SpriteRenderer>().sprite = s;
+   }
+
+  public static void SetImage(Image target, string image_name) {
+     Sprite s = Resources.Load<Sprite>(image_name);
+     target.sprite = s;
    }
  }

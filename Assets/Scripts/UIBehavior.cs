@@ -11,7 +11,7 @@ public class UIBehavior : MonoBehaviour
     public Canvas UIcanvas;
     public GameObject statusHUD;
     public GameObject screenText;
-    public GameObject screenBG;
+    public GameObject screenBG; // Panel
     public GameObject room;
     private float countdown_secs = 0;
     private string countdown_message = null;
@@ -32,7 +32,7 @@ public class UIBehavior : MonoBehaviour
     void Update()
     {
         if (countdown_secs > 0) {
-            int seconds_left = (int) (countdown_secs - Time.time);
+            int seconds_left = Mathf.RoundToInt(countdown_secs - Time.time);
             if (seconds_left < 0) countdown_secs = 0;
             string message = countdown_message + " " + seconds_left.ToString();
             ShowHUDMessage(message);
@@ -74,6 +74,23 @@ public class UIBehavior : MonoBehaviour
         ShowHUDScreen(message, bgcolor);
     }
 
+    public void ShowHUDImage(string image_path) {
+        Image img = this.screenBG.GetComponent<Image>();
+        img.color = Color.black;
+        this.screenBG.SetActive(true);
+        Util.SetImage(img, image_path);
+        this.screenText.GetComponent<Text>().text = "";
+        this.screenText.SetActive(true);
+        this.room.SetActive(false);
+        this.statusHUD.SetActive(false);
+    }
+
+    public void ShowHUDImageWithConfirm(string image_path, string callback) {
+        invokeOnCallback = callback;
+        waitingForTrigger = true;
+        ShowHUDImage(image_path);
+    }
+
     public void ShowHUDScreenWithDelayedConfirm(string message, Color bgcolor,  string callback) {
         // Same as ShowHUDScreenWithConfirm but disallows confirm until X seconds
         // have passed (e.g. to allow experimenter intervention)
@@ -96,6 +113,7 @@ public class UIBehavior : MonoBehaviour
     }
 
     public void HideHUDScreen() {
+        this.screenBG.GetComponent<Image>().sprite = null; // In case image showing
         this.screenBG.SetActive(false);
         this.screenText.SetActive(false);
         this.room.SetActive(true);

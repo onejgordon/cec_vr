@@ -13,6 +13,7 @@ public class MySessionData
     public List<int> hand_order = new List<int>();
 
     public string session_id;
+    public string condition;
     public bool left_handed = false;
     public int total_points = 0;
     public int total_points_possible = 0;

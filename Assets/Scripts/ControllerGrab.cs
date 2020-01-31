@@ -125,6 +125,7 @@ public class ControllerGrab : MonoBehaviour
     private FixedJoint AddFixedJoint(GameObject objectInHand)
     {
         // Links controller with card
+        Debug.Log("Adding fixed joint...");
         FixedJoint fx = gameObject.AddComponent<FixedJoint>();
         fx.breakForce = 20000;
         fx.breakTorque = 20000;

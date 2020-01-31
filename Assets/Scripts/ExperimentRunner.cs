@@ -9,7 +9,7 @@ using Tobii.XR;
 
 public class ExperimentRunner : MonoBehaviour
 {
-    private Color SKY_ADVERSARY = new Color(200, 0, 0);
+    private Color SKY_ADVERSARY = new Color(200, 50, 50);
     private Color SKY_DEFAULT = new Color(150, 150, 150);
     public bool VISUAL_ADVERSARY_INFO = true;
     public bool QUICK_DEBUG = true;
@@ -96,6 +96,7 @@ public class ExperimentRunner : MonoBehaviour
             Quaternion ctrlRot = controller.rotation;
             Vector3 gazeOrigin = new Vector3();
             Vector3 gazeDirection = new Vector3();
+            float convDistance = -1.0f; // Default when not valid
             bool eitherEyeClosed = false;
             var eyeTrackingData = TobiiXR.GetEyeTrackingData(TobiiXR_TrackingSpace.World);
             if (eyeTrackingData.GazeRay.IsValid) {
@@ -103,7 +104,10 @@ public class ExperimentRunner : MonoBehaviour
                 gazeDirection = eyeTrackingData.GazeRay.Direction;
             }
             eitherEyeClosed = eyeTrackingData.IsLeftEyeBlinking || eyeTrackingData.IsRightEyeBlinking;
-            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection, eitherEyeClosed);
+            if (eyeTrackingData.ConvergenceDistanceIsValid) {
+                convDistance = eyeTrackingData.ConvergenceDistance;
+            }
+            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection, convDistance, eitherEyeClosed);
             this.current_trial.addRecord(record);
         }
     }
@@ -359,6 +363,7 @@ public class ExperimentRunner : MonoBehaviour
             );
         ui.ShowHUDScreen(results, DGREEN);
         Debug.Log(">>>>>> Subject Bonus: $" + dollars.ToString());
+        TobiiXR.Stop();
     }
 
 }

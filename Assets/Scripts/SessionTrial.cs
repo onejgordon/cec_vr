@@ -41,10 +41,15 @@ public class Record {
     public float gaze_dir_x;
     public float gaze_dir_y;
     public float gaze_dir_z;
+    public float gaze_tgt_x; // Inferred from distance
+    public float gaze_tgt_y; // Inferred from distance
+    public float gaze_tgt_z; // Inferred from distance
+
+    public float gaze_conv_dist; // -1 = N/A
     public bool blinking;
     public double ts;
 
-    public Record(Quaternion hmd_rot, Quaternion ctr_rot, Vector3 gaze_origin, Vector3 gaze_direction, bool blinking) {
+    public Record(Quaternion hmd_rot, Quaternion ctr_rot, Vector3 gaze_origin, Vector3 gaze_direction, float convDistance, bool blinking) {
         this.ts = Util.timestamp();
         float hmd_x = hmd_rot.x;
         float hmd_y = hmd_rot.y;
@@ -75,6 +80,13 @@ public class Record {
             this.gaze_dir_x = gaze_direction.x;
             this.gaze_dir_y = gaze_direction.y;
             this.gaze_dir_z = gaze_direction.z;
+        }
+        this.gaze_conv_dist = convDistance;
+        if (convDistance > -1.0 && gaze_origin != null && gaze_direction != null) {
+            Vector3 tgt = gaze_origin + gaze_direction * convDistance;
+            this.gaze_tgt_x = tgt.x;
+            this.gaze_tgt_y = tgt.y;
+            this.gaze_tgt_z = tgt.z;
         }
         this.blinking = blinking;
     }

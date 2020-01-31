@@ -9,9 +9,9 @@ using Valve.VR;
 public class UIBehavior : MonoBehaviour
 {
     public Canvas UIcanvas;
-    public GameObject statusHUD;
+    public GameObject statusHUD; // Countdown message overlay, etc
     public GameObject screenText;
-    public GameObject screenBG; // Panel
+    public GameObject screenBG; // Panel (background)
     public GameObject uiImage; // Image
     public GameObject room;
     private float countdown_secs = 0;

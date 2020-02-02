@@ -13,26 +13,7 @@ public class ControllerGrab : MonoBehaviour
     private ExperimentRunner exp;
     private HolderBehavior holder;
     private bool inHandZone = false;
-    private FixedJoint joint;
-
-
-    private bool cardPlaceable() {
-        return (objectInHand && inHandZone);
-    }
-
-    private void Vibrate() {
-        GetComponent<ControllerActions>().Vibrate();
-    }
-    private void SetCollidingObject(Collider col)
-    {
-        if (collidingObject || !col.GetComponent<Rigidbody>())
-        {
-            // Do nothing if already colliding with something
-            return;
-        }
-        Debug.Log("Setting colliding to " + col.gameObject.ToString());
-        collidingObject = col.gameObject;
-    }
+    private FixedJoint joint = null;
 
     void Start() {
         this.exp = GameObject.Find("Camera").GetComponent<ExperimentRunner>();
@@ -60,24 +41,53 @@ public class ControllerGrab : MonoBehaviour
 
     }
 
-    public void ResetState() {
-        Debug.Log("Resetting controller dynamics...");
-        // Reset dynamics state
-        if (this.objectInHand != null) this.objectInHand.tag = "NotGrabbable"; // Prevent immediate re-grab
-        this.objectInHand = null;
-        this.collidingObject = null;
-        this.holder.setHighlight(false);
-        // Delete fixedjoint if present
+    public void DisconnectJoint() {
         if (this.joint != null)
         {
             Debug.Log("Destroying joint");
             this.joint.connectedBody = null;
             Destroy(this.joint);
+            this.joint = null;
         }
     }
 
+    public void ResetState() {
+        Debug.Log("Resetting controller dynamics...");
+        // Reset dynamics state
+        // if (this.objectInHand != null) this.objectInHand.tag = "NotGrabbable"; // Prevent immediate re-grab
+        this.objectInHand = null;
+        this.collidingObject = null;
+        this.holder.setHighlight(false);
+        this.DisconnectJoint();
+        
+    }
+
+
+    private bool cardPlaceable() {
+        return (this.holdingCard() && inHandZone);
+    }
+
+    private void Vibrate() {
+        GetComponent<ControllerActions>().Vibrate();
+    }
+    private void SetCollidingObject(Collider col)
+    {
+        if (collidingObject != null || !col.GetComponent<Rigidbody>())
+        {
+            // Do nothing if already colliding with something
+            return;
+        }
+        Debug.Log("Setting colliding to " + col.gameObject.ToString());
+        collidingObject = col.gameObject;
+    }
+
+
     public void EnteredHandZone(bool in_zone) {
         inHandZone = in_zone;
+    }
+
+    private bool holdingCard() {
+        return this.joint != null;
     }
 
     public void OnTriggerEnter(Collider other)
@@ -135,13 +145,12 @@ public class ControllerGrab : MonoBehaviour
 
     private void ReleaseObject()
     {
-        if (this.joint != null)
+        if (this.holdingCard())
         {
             Debug.Log("Release card");
-            this.joint.connectedBody = null;
-            Destroy(this.joint);
-
-            if (this.cardPlaceable()) {
+            bool placeable = this.cardPlaceable();
+            this.DisconnectJoint();
+            if (placeable) {
                 Debug.Log("RO 2");
                 // Releasing card into hand
                 // Snap to holder position

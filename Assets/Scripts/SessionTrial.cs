@@ -158,6 +158,25 @@ public class SessionTrial
     public void StartSelection() {
         this.ts_selection = Util.timestamp();
     }
+
+    public int adversaryGuess() {
+        int nFixations = this.fixations.Count;
+        if (nFixations > 0) {
+            int rightFixations = 0;
+            foreach (Fixation f in this.fixations) {
+                if (f.objectName.EndsWith("1")) rightFixations += 1;          
+            }
+            if ((rightFixations / (double)this.fixations.Count) > 0.5) {
+                // Most fixations right
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            // No fixations, coin flip
+            return (Random.Range(0.0f, 1.0f) > 0.5) ? 1 : 0;
+        }
+    }
     public void StoreResponseAndScore(int pos) {
         this.subject_choice = pos;
         this.ts_choice = Util.timestamp();
@@ -167,7 +186,7 @@ public class SessionTrial
         // Score
         if (this.adversarial()) {
             // Make prediction based on eye fixations
-            int adversary_prediction = Random.Range(0, 1); // TODO (currently coin flip)
+            int adversary_prediction = this.adversaryGuess();
             this.avoided_prediction = adversary_prediction != pos;
             bool successful = this.avoided_prediction && correct;
             this.points += successful ? 1 : 0;

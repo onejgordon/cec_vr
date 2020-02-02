@@ -348,13 +348,14 @@ public class ExperimentRunner : MonoBehaviour
         if (this.recording) this.recording = false;
         MaybeClearHand();
         string results = "All trials finished!\n\n";
-        double percent = this.session.data.total_points / this.session.data.total_points_possible;
+        double percent = this.session.data.total_points / (double) this.session.data.total_points_possible;
         int dollars = 0;
         if (percent >= .25 && percent < .4) dollars = 1;
         else if (percent >= .4 && percent < .55) dollars = 2;
         else if (percent >= .55 && percent < .70) dollars = 3;
         else if (percent >= .7 && percent < .85) dollars = 4;
         else if (percent >= .85) dollars = 5;
+        int total = dollars + 20;
         results += string.Format("You correctly matched in {0} of {1} trials.\n Of those, you avoided prediction {2} times.\nYour final success rate is {3:0.0}% (${4} bonus).\n\nYour experimenter will help you take off the VR headset.", 
             this.session.data.total_matches,
             this.session.data.total_points_possible, 
@@ -363,7 +364,7 @@ public class ExperimentRunner : MonoBehaviour
             dollars
             );
         ui.ShowHUDScreen(results, DGREEN);
-        Debug.Log(">>>>>> Subject Bonus: $" + dollars.ToString());
+        Debug.Log(">>>>>> Subject Bonus: $" + dollars.ToString() + " TOTAL: $" + total.ToString());
         TobiiXR.Stop();
     }
 

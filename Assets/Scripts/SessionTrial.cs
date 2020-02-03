@@ -130,13 +130,13 @@ public class SessionTrial
     public int trial_id;
     public int points = 0;
     public bool correct = false;
-    public bool avoided_prediction = false; 
+    public bool avoided_prediction = false;
     public double ts_start;
     public double ts_selection;
-    public double ts_choice;
-    private bool with_adversary = false;
+    public double ts_end;
+    public bool with_adversary = false;
     private bool choice_made = false;
-    private bool practice = false;
+    public bool practice = false;
 
     public List<Fixation> fixations;
     public List<Record> records;
@@ -164,7 +164,7 @@ public class SessionTrial
         if (nFixations > 0) {
             int rightFixations = 0;
             foreach (Fixation f in this.fixations) {
-                if (f.objectName.EndsWith("1")) rightFixations += 1;          
+                if (f.objectName.EndsWith("1")) rightFixations += 1;
             }
             if ((rightFixations / (double)this.fixations.Count) > 0.5) {
                 // Most fixations right
@@ -177,9 +177,13 @@ public class SessionTrial
             return (Random.Range(0.0f, 1.0f) > 0.5) ? 1 : 0;
         }
     }
+
+    public void Finished() {
+        this.ts_end = Util.timestamp();
+    }
+
     public void StoreResponseAndScore(int pos) {
         this.subject_choice = pos;
-        this.ts_choice = Util.timestamp();
         this.choice_made = true;
         this.correct = this.hand.correct[pos] == 1;
 

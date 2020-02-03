@@ -17,7 +17,7 @@ public class ExperimentRunner : MonoBehaviour
     private int DECISION_SECS = 10;
     private int PICKUP_SECS = 5; // -1 for infinite time (wait for user choice)
     private int ADVERSARY_ROUNDS_IMMEDIATE = 3; // 3, ~ 1 minute
-    private int ADVERSARY_ROUNDS_DELAYED = 15; // 15, ~ 5 minutes 
+    private int ADVERSARY_ROUNDS_DELAYED = 15; // 15, ~ 5 minutes
 
     public int EXP_MAX_MINS = 25;
     public bool left_handed = false;
@@ -25,7 +25,7 @@ public class ExperimentRunner : MonoBehaviour
     private double ts_exp_start = 0; // Timestamp
     private int trial_index = 0;
     public int practice_rounds = 2;
-    private int practice_remaining = 0; 
+    private int practice_remaining = 0;
     private SessionTrial current_trial;
     public Transform card;
     public SessionSaver session;
@@ -62,7 +62,7 @@ public class ExperimentRunner : MonoBehaviour
             MAX_TRIALS = 5;
             this.session_id = "DEBUG";
         } else {
-            this.session_id = ((int)Util.timestamp()).ToString();   
+            this.session_id = ((int)Util.timestamp()).ToString();
         }
         this.session.data.session_id = this.session_id;
         this.session.data.left_handed = this.left_handed;
@@ -113,7 +113,7 @@ public class ExperimentRunner : MonoBehaviour
     }
 
     public void Calibrate() {
-        
+
     }
 
     private int non_adversary_rounds() {
@@ -234,7 +234,8 @@ public class ExperimentRunner : MonoBehaviour
         // Score selection and save trial to session
         ui.ClearCountdown();
         ui.ShowHUDMessage("Trial complete");
-        
+
+        this.current_trial.Finished();
         this.current_trial.SaveToFile();
         this.current_trial.CleanUpData(); // Deletes large data once saved
         session.AddTrial(this.current_trial);
@@ -356,9 +357,9 @@ public class ExperimentRunner : MonoBehaviour
         else if (percent >= .7 && percent < .85) dollars = 4;
         else if (percent >= .85) dollars = 5;
         int total = dollars + 20;
-        results += string.Format("You correctly matched in {0} of {1} trials.\n Of those, you avoided prediction {2} times.\nYour final success rate is {3:0.0}% (${4} bonus).\n\nYour experimenter will help you take off the VR headset.", 
+        results += string.Format("You correctly matched in {0} of {1} trials.\n Of those, you avoided prediction {2} times.\nYour final success rate is {3:0.0}% (${4} bonus).\n\nYour experimenter will help you take off the VR headset.",
             this.session.data.total_matches,
-            this.session.data.total_points_possible, 
+            this.session.data.total_points_possible,
             this.session.data.total_points,
             100.0 * percent,
             dollars

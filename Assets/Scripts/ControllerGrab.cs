@@ -8,6 +8,7 @@ public class ControllerGrab : MonoBehaviour
     public SteamVR_Input_Sources handType;
     public SteamVR_Behaviour_Pose controllerPose;
     public SteamVR_Action_Boolean grabAction;
+    public SteamVR_Action_Vibration vibrateAction;
     private GameObject collidingObject;
     private GameObject objectInHand;
     private ExperimentRunner exp;
@@ -68,7 +69,7 @@ public class ControllerGrab : MonoBehaviour
     }
 
     private void Vibrate() {
-        GetComponent<ControllerActions>().Vibrate();
+        // this.vibrateAction.Execute(0, 0.7f, 50, 0.5f, SteamVR_Input_Sources.Any);
     }
     private void SetCollidingObject(Collider col)
     {
@@ -77,6 +78,7 @@ public class ControllerGrab : MonoBehaviour
             // Do nothing if already colliding with something
             return;
         }
+        if (col.gameObject.name.StartsWith("Controller")) return;
         Debug.Log("Setting colliding to " + col.gameObject.ToString());
         collidingObject = col.gameObject;
     }

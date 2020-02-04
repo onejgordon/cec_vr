@@ -38,9 +38,11 @@ public class LookHandler : MonoBehaviour, IGazeFocusable
             this.last_gaze_start_ts = Util.timestamp();
         } else {
             // Stop gaze timer and record fixation
-            Debug.Log("Adding fixation on " + gameObject.name);
-            SessionTrial trial = exp.getCurrentTrial();
-            if (trial != null) trial.addFixation(gameObject.name, this.last_gaze_start_ts, Util.timestamp());
+            if (this.last_gaze_start_ts > 0.0f) {
+                Debug.Log("Adding fixation on " + gameObject.name);
+                SessionTrial trial = exp.getCurrentTrial();
+                if (trial != null) trial.addFixation(gameObject.name, this.last_gaze_start_ts, Util.timestamp());
+            }
         }
     }
 

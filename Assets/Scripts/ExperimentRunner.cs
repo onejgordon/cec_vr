@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 using Valve.VR.Extras;
 using System.IO;
 using Tobii.XR;
 
 public class ExperimentRunner : MonoBehaviour
 {
-    private Color SKY_ADVERSARY = new Color(200, 50, 50);
-    private Color SKY_DEFAULT = new Color(150, 150, 150);
+    private Color SKY_ADVERSARY = new Color(.9f, .4f, .4f);
+    private Color SKY_DEFAULT = new Color(.5f, .5f, .5f);
     public bool VISUAL_ADVERSARY_INFO = true;
     public bool QUICK_DEBUG = true;
     public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
@@ -83,9 +82,9 @@ public class ExperimentRunner : MonoBehaviour
             this.RandomizeTrialOrder();
             Debug.Log(string.Format("Loaded {0} hands from {1}", this.hands.Count, path));
         } else Debug.Log(string.Format("{0} doesn't exist", path));
-        // TobiiXR_Settings tsettings = new TobiiXR_Settings();
-        // tsettings.FieldOfUse = TobiiXR_Settings.FieldOfUse.anal
-        // TobiiXR.Start();
+        TobiiXR_Settings tobii_settings = new TobiiXR_Settings();
+        tobii_settings.FieldOfUse = FieldOfUse.Analytical;
+        TobiiXR.Start(tobii_settings);
         this.randomize_condition();
         this.BeginExperiment();
     }
@@ -215,7 +214,7 @@ public class ExperimentRunner : MonoBehaviour
             int prounds = this.practice_hands.Count;
             ui.ShowHUDScreenWithConfirm(
                 string.Format(
-                    "This is practice round {0} of {1}. After the decision phase, try selecting a card and bringing it to your hand. Your choice on these rounds wont affect your score. Click your controller trigger to proceed.",
+                    "This is practice round {0} of {1}. After the decision phase, try selecting a card and bringing it to your hand. Your choice on these rounds won't affect your score. Click your controller trigger to proceed.",
                     prounds - this.practice_remaining,
                     prounds
                 ),
@@ -359,12 +358,13 @@ public class ExperimentRunner : MonoBehaviour
         else if (percent >= .7 && percent < .85) dollars = 4;
         else if (percent >= .85) dollars = 5;
         int total = dollars + 20;
-        results += string.Format("You correctly matched in {0} of {1} trials.\n Of those, you avoided prediction {2} times.\nYour final success rate is {3:0.0}% (${4} bonus).\n\nYour experimenter will help you take off the VR headset.",
+        results += string.Format("You correctly matched in {0} of {1} trials.\n Of those, you avoided prediction {2} times.\nYour final success rate is {3:0.0}% (${4} bonus, ${5} total).\n\nYour experimenter will help you take off the VR headset.",
             this.session.data.total_matches,
             this.session.data.total_points_possible,
             this.session.data.total_points,
             100.0 * percent,
-            dollars
+            dollars,
+            total
             );
         ui.ShowHUDScreen(results, DGREEN);
         Debug.Log(">>>>>> Subject Bonus: $" + dollars.ToString() + " TOTAL: $" + total.ToString());

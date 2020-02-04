@@ -60,7 +60,6 @@ public class ControllerGrab : MonoBehaviour
         this.collidingObject = null;
         this.holder.setHighlight(false);
         this.DisconnectJoint();
-        
     }
 
 
@@ -79,7 +78,7 @@ public class ControllerGrab : MonoBehaviour
             return;
         }
         if (col.gameObject.name.StartsWith("Controller")) return;
-        Debug.Log("Setting colliding to " + col.gameObject.ToString());
+        // Debug.Log("Setting colliding to " + col.gameObject.ToString());
         collidingObject = col.gameObject;
     }
 
@@ -130,14 +129,13 @@ public class ControllerGrab : MonoBehaviour
             collidingObject = null;
             this.joint = AddFixedJoint(objectInHand);
         } else {
-            Debug.Log("Tried to grab ungrabbable object");
+            // Debug.Log("Tried to grab ungrabbable object");
         }
     }
 
     private FixedJoint AddFixedJoint(GameObject objectInHand)
     {
         // Links controller with card
-        Debug.Log("Adding fixed joint...");
         FixedJoint fx = gameObject.AddComponent<FixedJoint>();
         fx.breakForce = 20000;
         fx.breakTorque = 20000;
@@ -153,7 +151,6 @@ public class ControllerGrab : MonoBehaviour
             bool placeable = this.cardPlaceable();
             this.DisconnectJoint();
             if (placeable) {
-                Debug.Log("RO 2");
                 // Releasing card into hand
                 // Snap to holder position
                 GameObject placeholder = GameObject.Find("Placeholder");

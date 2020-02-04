@@ -13,6 +13,7 @@ public class Fixation {
     public double duration;
 
     public Fixation(string objectName, double start_ts, double stop_ts) {
+        this.objectName = objectName;
         this.duration = stop_ts - start_ts;
         this.start_ts = start_ts;
         this.stop_ts = stop_ts;

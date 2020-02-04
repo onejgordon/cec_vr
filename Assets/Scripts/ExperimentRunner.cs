@@ -82,9 +82,9 @@ public class ExperimentRunner : MonoBehaviour
             this.RandomizeTrialOrder();
             Debug.Log(string.Format("Loaded {0} hands from {1}", this.hands.Count, path));
         } else Debug.Log(string.Format("{0} doesn't exist", path));
-        TobiiXR_Settings tobii_settings = new TobiiXR_Settings();
-        tobii_settings.FieldOfUse = FieldOfUse.Analytical;
-        TobiiXR.Start(tobii_settings);
+        // TobiiXR_Settings tobii_settings = new TobiiXR_Settings();
+        // tobii_settings.FieldOfUse = FieldOfUse.Analytical;
+        // TobiiXR.Start(tobii_settings);
         this.randomize_condition();
         this.BeginExperiment();
     }

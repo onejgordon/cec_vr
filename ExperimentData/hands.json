@@ -164,7 +164,57 @@
 			"priv": ["1s", "1d"],
 			"table": ["1s", "1o"],
 			"correct": [0, 1]
-		}		
+		},
+		{
+			"priv": ["3s", "2d"],
+			"table": ["1o", "1d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2o", "2s"],
+			"table": ["1d", "2d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["2o", "1o"],
+			"table": ["3o", "2o"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2d", "3d"],
+			"table": ["1o", "1d"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["3o", "3o"],
+			"table": ["2o", "3o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1d", "3o"],
+			"table": ["2s", "2d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["3s", "3d"],
+			"table": ["1s", "3o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["1o", "2o"],
+			"table": ["3o", "3d"],
+			"correct": [1, 0]
+		},
+		{
+			"priv": ["2s", "2d"],
+			"table": ["2s", "2o"],
+			"correct": [0, 1]
+		},
+		{
+			"priv": ["3o", "1o"],
+			"table": ["2o", "3d"],
+			"correct": [1, 0]
+		}
 	],
 	"practice_hands": [
 		{
@@ -186,6 +236,6 @@
 			"priv": ["1o", "1s"],
 			"table": ["1d", "1s"],
 			"correct": [1, 0]
-		}				
+		}
 	]
 }

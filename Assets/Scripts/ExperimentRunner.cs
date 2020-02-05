@@ -124,8 +124,7 @@ public class ExperimentRunner : MonoBehaviour
 
     private void randomize_condition() {
         int c = Random.Range(0, 1);
-        if (c == 0) { this.condition = "immediate"; }
-        else { this.condition = "delayed"; }
+        this.condition = Random.Range(0.0f, 1.0f) > 0.5 ? "immediate" : "delayed";
         Debug.Log("Condition: " + this.condition);
         this.session.data.condition = this.condition;
     }

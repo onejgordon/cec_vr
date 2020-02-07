@@ -16,7 +16,7 @@ public class ExperimentRunner : MonoBehaviour
     private int DECISION_SECS = 10;
     private int PICKUP_SECS = 5; // -1 for infinite time (wait for user choice)
     private int ADVERSARY_ROUNDS_IMMEDIATE = 3; // 3, ~ 1 minute
-    private int ADVERSARY_ROUNDS_DELAYED = 15; // 15, ~ 5 minutes
+    private int ADVERSARY_ROUNDS_DELAYED = 22; // 22, ~ half of non-practice
 
     public int EXP_MAX_MINS = 25;
     public bool left_handed = false;

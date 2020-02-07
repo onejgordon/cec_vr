@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Grabbable
   - Controller
+  - NotGazeFocusable
   layers:
   - Default
   - TransparentFX

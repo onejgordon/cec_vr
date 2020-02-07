@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 524338191136429086}
   m_Layer: 0
   m_Name: Face
-  m_TagString: Untagged
+  m_TagString: NotGazeFocusable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 7918878008941989626}
   - component: {fileID: 3091590090728342433}
   - component: {fileID: 686592108865140214}
-  - component: {fileID: 8423075066563447934}
+  - component: {fileID: 7183563753218216017}
   m_Layer: 0
   m_Name: Card
   m_TagString: Untagged
@@ -206,7 +206,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7e5adcae62a4ca4da1ae21ba6a386f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &8423075066563447934
+--- !u!114 &7183563753218216017
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

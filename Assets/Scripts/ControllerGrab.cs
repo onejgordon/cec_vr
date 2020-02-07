@@ -45,7 +45,6 @@ public class ControllerGrab : MonoBehaviour
     public void DisconnectJoint() {
         if (this.joint != null)
         {
-            Debug.Log("Destroying joint");
             this.joint.connectedBody = null;
             Destroy(this.joint);
             this.joint = null;
@@ -147,7 +146,6 @@ public class ControllerGrab : MonoBehaviour
     {
         if (this.holdingCard())
         {
-            Debug.Log("Release card");
             bool placeable = this.cardPlaceable();
             this.DisconnectJoint();
             if (placeable) {

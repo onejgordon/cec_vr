@@ -60,6 +60,7 @@ public class ExperimentRunner : MonoBehaviour
             ADVERSARY_ROUNDS_DELAYED = 3;
             MAX_TRIALS = 5;
             this.session_id = "DEBUG";
+            PICKUP_SECS = -1; // Infinite time
         } else {
             this.session_id = ((int)Util.timestamp()).ToString();
         }

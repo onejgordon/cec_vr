@@ -14,7 +14,7 @@ public class ExperimentRunner : MonoBehaviour
     public bool QUICK_DEBUG = true;
     public int MAX_TRIALS = 0; // Set to 0 for production. Just for short debug data collection
     private int DECISION_SECS = 10;
-    private int PICKUP_SECS = 5; // -1 for infinite time (wait for user choice)
+    private int PICKUP_SECS = 3; // -1 for infinite time (wait for user choice)
     private int ADVERSARY_ROUNDS_IMMEDIATE = 3; // 3, ~ 1 minute
     private int ADVERSARY_ROUNDS_DELAYED = 22; // 22, ~ half of non-practice
 

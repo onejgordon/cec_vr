@@ -136,7 +136,7 @@ public class SessionTrial
     public double ts_selection;
     public double ts_end;
     public bool with_adversary = false;
-    private bool choice_made = false;
+    public bool choice_made = false;
     public bool practice = false;
 
     public List<Fixation> fixations;

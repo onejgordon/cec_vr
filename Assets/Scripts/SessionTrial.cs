@@ -30,12 +30,18 @@ public class Record {
     public float hmd_x;
     public float hmd_y;
     public float hmd_z;
+    public float hmd_pos_x;
+    public float hmd_pos_y;
+    public float hmd_pos_z;
     public float ctr_yaw;
     public float ctr_roll;
     public float ctr_pitch;
     public float ctr_x;
     public float ctr_y;
     public float ctr_z;
+    public float ctr_pos_x;
+    public float ctr_pos_y;
+    public float ctr_pos_z;
     public float gaze_or_x;
     public float gaze_or_y;
     public float gaze_or_z;
@@ -50,7 +56,7 @@ public class Record {
     public bool blinking;
     public double ts;
 
-    public Record(Quaternion hmd_rot, Quaternion ctr_rot, Vector3 gaze_origin, Vector3 gaze_direction, float convDistance, bool blinking) {
+    public Record(Vector3 hmd_pos, Vector3 ctrl_pos, Quaternion hmd_rot, Quaternion ctr_rot, Vector3 gaze_origin, Vector3 gaze_direction, float convDistance, bool blinking) {
         this.ts = Util.timestamp();
         float hmd_x = hmd_rot.x;
         float hmd_y = hmd_rot.y;
@@ -62,6 +68,9 @@ public class Record {
         this.hmd_x = hmd_x;
         this.hmd_y = hmd_y;
         this.hmd_z = hmd_z;
+        this.hmd_pos_x = hmd_pos.x;
+        this.hmd_pos_y = hmd_pos.y;
+        this.hmd_pos_z = hmd_pos.z;
         float ctr_x = ctr_rot.x;
         float ctr_y = ctr_rot.y;
         float ctr_z = ctr_rot.z;
@@ -72,6 +81,10 @@ public class Record {
         this.ctr_x = ctr_x;
         this.ctr_y = ctr_y;
         this.ctr_z = ctr_z;
+        this.ctr_pos_x = ctrl_pos.x;
+        this.ctr_pos_y = ctrl_pos.y;
+        this.ctr_pos_z = ctrl_pos.z;
+
         if (gaze_origin != null) {
             this.gaze_or_x = gaze_origin.x;
             this.gaze_or_y = gaze_origin.y;

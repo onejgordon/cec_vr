@@ -109,7 +109,7 @@ public class ExperimentRunner : MonoBehaviour
             if (eyeTrackingData.ConvergenceDistanceIsValid) {
                 convDistance = eyeTrackingData.ConvergenceDistance;
             }
-            Record record = new Record(hmdRot, ctrlRot, gazeOrigin, gazeDirection, convDistance, eitherEyeClosed);
+            Record record = new Record(hmdCamera.position, controller.position, hmdRot, ctrlRot, gazeOrigin, gazeDirection, convDistance, eitherEyeClosed);
             this.current_trial.addRecord(record);
         }
     }

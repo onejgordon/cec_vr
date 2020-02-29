@@ -301,7 +301,7 @@ public class ExperimentRunner : MonoBehaviour
 
     void DealHand() {
         HandSpec hs = this.current_trial.hand;
-        float CARD_LIFT = 0.04f;
+        float CARD_LIFT = 0.01f;
         Vector3 table_pos = this.table.localPosition;
         float table_rad = this.table.localScale.z / 2;
         float table_h = this.table.localScale.y;

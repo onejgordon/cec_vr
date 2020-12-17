@@ -1,16 +1,12 @@
-# Covert Embodied Choice | VR Scene
+# Covert Embodied Choice
 
-## Planned capabilities:
+Unity code for CEC VR experimental setup.
 
-- Tracking head, arm, gaze in VR
-- Interactive card-based trials as per CEC experimental protocol
+![image](./Assets/Resources/Images/Subject CEC Setup.png)
 
+### Paper
 
-## Todo
-
-- Handle timeout with no selection
-- Show adversary stats at end
-- Data collection from gaze
+*Covert Embodied Choice: Decision-Making, VR, and the Limits of Privacy Under Biometric Surveillance* by Jeremy Gordon, Max Curran, Coye Cheshire, and John Chuang to be presented at CHI 2021.
 
 ## Dependencies
 

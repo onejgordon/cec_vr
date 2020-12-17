@@ -2,7 +2,7 @@
 
 Unity code for CEC VR experimental setup.
 
-![image](./Assets/Resources/Images/Subject CEC Setup.png)
+![Experiment Setup](Assets/Resources/Images/Subject CEC Setup.png)
 
 ### Paper
 
